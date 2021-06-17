@@ -56,3 +56,53 @@ resource "aws_s3_bucket_policy" "share" {
     ]
   })
 }
+
+// dynamo: share kv store
+resource "aws_dynamodb_table" "share" {
+  name           = var.share_table-name
+  billing_mode   = "PROVISIONED"
+  read_capacity  = 25
+  write_capacity = 25
+  hash_key       = "Id"
+  range_key      = "Count"
+
+  attribute {
+    name = "Id"
+    type = "S"
+  }
+
+  attribute {
+    name = "Count"
+    type = "N"
+  }
+}
+
+// lambda: share endpoint
+resource "aws_lambda_function" "share" {
+  function_name    = var.share_lambda-name
+  filename         = var.share_lambda-filename
+  role             = aws_iam_role.share_lambda.arn
+  handler          = "exports.test"
+  source_code_hash = filebase64sha256(var.share_lambda-filename)
+  runtime          = "go1.x"
+}
+
+resource "aws_iam_role" "share_lambda" {
+  name = var.share_lambda-iam
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}

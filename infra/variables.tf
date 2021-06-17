@@ -7,3 +7,8 @@ variable "share_bucket-name" {
   type    = string
   default = "share"
 }
+
+variable "share_table-name" {
+  type    = string
+  default = "share"
+}

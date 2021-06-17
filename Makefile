@@ -13,7 +13,7 @@ t-localstack = localstack
 t-tf = terraform -chdir="$(d-infra)"
 
 # -- init --
-## init dev environment
+## setup dev env
 init: i
 .PHONY: init
 
@@ -29,26 +29,44 @@ ifeq ("$(shell command -v brew)", "")
 endif
 .PHONY: i/pre
 
-# -- start --
-## start localstack
-stack: s
-.PHONY: start
+# -- build --
+## [b]uild handler fn
+build: b
+.PHONY: build
 
-s:
-	$(t-localstack) start
-.PHONY: s
+b:
+	GOOS=linux go build cmd/...
+.PHONY: b
 
-## stop localstack
-s/stop:
-	$(t-docker) stop localstack_main
-.PHONY: s/stop
+# -- test --
+## run tests
+test: t
+.PHONY: test
+
+t:
+	go test pkg/...
+.PHONY: t
 
 # -- infra --
-## plan dev in[f]ra
-infra: i
+## in[f]ra; aliases f/start
+infra: f
 .PHONY: infra
 
-f: $(d-tf)
+f: f/start
+.PHONY: f
+
+## start localstack
+f/start:
+	$(t-localstack) start
+.PHONY: f/start
+
+## stop localstack
+f/stop:
+	$(t-docker) stop localstack_main
+.PHONY: f/stop
+
+## plan dev infra
+f/plan: $(d-tf)
 	$(t-tf) plan
 .PHONY: f
 
@@ -63,9 +81,9 @@ f/apply:
 .PHONY: f/apply
 
 ## destroy infra
-f/destroy:
+f/reset:
 	$(t-tf) destroy
-.PHONY: f/destroy
+.PHONY: f/reset
 
 # -- i/helpers
 $(d-tf):
