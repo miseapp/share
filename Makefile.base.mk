@@ -22,7 +22,7 @@ BEGIN {
 	$$1=""; docs=$$0;
 	getline;
 	sub(/:/, "", $$1);
-	printf "  $(rd)%-$(help-column-width)s$(gr) %s$(rs)\n", $$1, docs;
+	printf "  $(rd)%-$(help-colw)s$(gr) %s$(rs)\n", $$1, docs;
 }
 endef
 export HELP

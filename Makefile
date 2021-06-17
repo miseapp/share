@@ -1,16 +1,23 @@
 include ./Makefile.base.mk
 
 # -- cosmetics --
-help-column-width = 7
+help-colw = 7
 
 # -- constants --
-d-infra = infra
-d-tf = $(d-infra)/.terraform
+df-infra = infra
+df-tf = $(df-infra)/.terraform
+db-build = build
+db-binary = $(db-build)/share
+db-archive = $(db-binary).zip
+dr-fn = share.add
+dr-endpoint = http://localhost:4566
 
 # -- tools --
-t-docker = docker
-t-localstack = localstack
-t-tf = terraform -chdir="$(d-infra)"
+ti-brew = brew
+tf-docker = docker
+tf-localstack = localstack
+tf-terraform = terraform -chdir="$(df-infra)"
+tr-aws = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds aws
 
 # -- init --
 ## setup dev env
@@ -18,11 +25,11 @@ init: i
 .PHONY: init
 
 i: i/pre
-	brew bundle -v
+	$(ti-brew) bundle -v
 .PHONY: i
 
 i/pre:
-ifeq ("$(shell command -v brew)", "")
+ifeq ("$(shell command -v $(ti-brew))", "")
 	$(info ✘ brew is not installed, please see:)
 	$(info - https://brew.sh)
 	$(error 1)
@@ -35,8 +42,22 @@ build: b
 .PHONY: build
 
 b:
-	GOOS=linux go build cmd/...
+	GOOS=linux go build -o $(db-binary) cmd/main.go
 .PHONY: b
+
+## build and archive
+b/arch: b
+	zip $(db-archive) $(db-binary)
+.PHONY: b/arch
+
+# -- run --
+## [r]un handler fn
+run: r
+.PHONY: run
+
+r:
+	$(tr-aws) lambda get-function --function-name $(dr-fn) --endpoint-url=$(dr-endpoint)
+.PHONE: r
 
 # -- test --
 ## run tests
@@ -57,34 +78,34 @@ f: f/start
 
 ## start localstack
 f/start:
-	$(t-localstack) start
+	$(tf-localstack) start
 .PHONY: f/start
 
 ## stop localstack
 f/stop:
-	$(t-docker) stop localstack_main
+	$(tf-docker) stop localstack_main
 .PHONY: f/stop
 
 ## plan dev infra
-f/plan: $(d-tf)
-	$(t-tf) plan
+f/plan: $(df-tf)
+	$(tf-terraform) plan
 .PHONY: f
 
 ## validate infra
 f/valid:
-	$(t-tf) validate
+	$(tf-terraform) validate
 .PHONY: f/validate
 
 ## apply planned infra
 f/apply:
-	$(t-tf) apply
+	$(tf-terraform) apply
 .PHONY: f/apply
 
 ## destroy infra
 f/reset:
-	$(t-tf) destroy
+	$(tf-terraform) destroy
 .PHONY: f/reset
 
 # -- i/helpers
-$(d-tf):
-	$(t-tf) init
+$(df-tf):
+	$(tf-terraform) init

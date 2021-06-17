@@ -5,10 +5,25 @@ variable "share_region" {
 
 variable "share_bucket-name" {
   type    = string
-  default = "share"
+  default = "share.files"
 }
 
 variable "share_table-name" {
   type    = string
-  default = "share"
+  default = "share.count"
+}
+
+variable "share_lambda-name" {
+  type    = string
+  default = "share.add"
+}
+
+variable "share_lambda-iam" {
+  type    = string
+  default = "share.add-role"
+}
+
+variable "share_lambda-filename" {
+  type    = string
+  default = "../build/share.zip"
 }
