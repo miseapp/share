@@ -3,13 +3,14 @@ include ./Makefile.base.mk
 # -- cosmetics --
 help-column-width = 7
 
+# -- constants --
+d-infra = infra
+d-tf = $(d-infra)/.terraform
+
 # -- tools --
 t-docker = docker
 t-localstack = localstack
-t-terraform = terraform
-
-# -- consants --
-d-terraform = .terraform
+t-tf = terraform -chdir="$(d-infra)"
 
 # -- init --
 ## init dev environment
@@ -47,25 +48,25 @@ s/stop:
 infra: i
 .PHONY: infra
 
-f: $(d-terraform)
-	$(t-terraform) plan
+f: $(d-tf)
+	$(t-tf) plan
 .PHONY: f
 
 ## validate infra
 f/valid:
-	$(t-terraform) validate
+	$(t-tf) validate
 .PHONY: f/validate
 
 ## apply planned infra
 f/apply:
-	$(t-terraform) apply
+	$(t-tf) apply
 .PHONY: f/apply
 
 ## destroy infra
 f/destroy:
-	$(t-terraform) destroy
+	$(t-tf) destroy
 .PHONY: f/destroy
 
 # -- i/helpers
-$(d-terraform):
-	$(t-terraform) init
+$(d-tf):
+	$(t-tf) init
