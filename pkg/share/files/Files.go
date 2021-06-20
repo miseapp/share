@@ -19,12 +19,12 @@ type Files struct {
 
 // -- impls --
 func New() *Files {
-	// create aws session
-	session := session.Must(session.NewSession())
+	// init aws session
+	session := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+	}))
 
-	dynamodb.New(session)
-
-	// create module
+	// init repo
 	return &Files{
 		s3: s3.New(session),
 		db: dynamodb.New(session),

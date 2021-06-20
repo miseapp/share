@@ -24,9 +24,9 @@ func New(source *Source) *Share {
 
 // -- i/command
 
-// Call invokes the share command
+// invokes the share command
 func (s *Share) Call() (string, error) {
 	shared := NewSharedFile(s.source)
-	s.files.Create(shared.AsHtml())
-	return "ok", nil
+	res, err := s.files.Create(shared.AsHtml())
+	return res, err
 }

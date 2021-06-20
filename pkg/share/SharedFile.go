@@ -1,7 +1,10 @@
 package share
 
 import (
+	"fmt"
 	"io"
+	"log"
+	"regexp"
 )
 
 // -- types --
@@ -31,6 +34,17 @@ func NewSharedFile(source *Source) *SharedFile {
 }
 
 // returns the html representation of the shared file
-func (*SharedFile) AsHtml() string {
-	return "html"
+func (s *SharedFile) AsHtml() string {
+	reg, err := regexp.Compile("[\t\n]+")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return fmt.Sprintf(reg.ReplaceAllLiteralString(`
+		<html>
+			<head>
+				<meta name="mise-share-url" content="%s">
+			</head>
+		</html>
+	`, ""), *s.source.Url)
 }

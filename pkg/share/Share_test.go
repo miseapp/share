@@ -14,7 +14,7 @@ func TestShare(t *testing.T) {
 		},
 	)
 
-	// run command
-	res, _ := share.Call()
+	res, err := share.Call()
+	assert.Equal(t, nil, err)
 	assert.Equal(t, "ok", res)
 }
