@@ -6,10 +6,12 @@ help-colw = 7
 # -- constants --
 df-infra = infra
 df-tf = $(df-infra)/.terraform
+db-entry = cmd/main.go
 db-build = build
 db-binary = $(db-build)/share
 db-archive = $(db-binary).zip
 dr-fn = share.add
+dr-payload = payload.json
 dr-endpoint = http://localhost:4566
 
 # -- tools --
@@ -17,7 +19,10 @@ ti-brew = brew
 tf-docker = docker
 tf-localstack = localstack
 tf-terraform = terraform -chdir="$(df-infra)"
-tr-aws = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds aws
+tb-go = go
+tt-go = go
+tr-aws = aws
+tr-env = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds
 
 # -- init --
 ## setup dev env
@@ -42,7 +47,7 @@ build: b
 .PHONY: build
 
 b:
-	GOOS=linux go build -o $(db-binary) cmd/main.go
+	GOOS=linux GOARCH=amd64 $(tb-go) build -o $(db-binary) $(db-entry)
 .PHONY: b
 
 ## build and archive
@@ -56,7 +61,13 @@ run: r
 .PHONY: run
 
 r:
-	$(tr-aws) lambda get-function --function-name $(dr-fn) --endpoint-url=$(dr-endpoint)
+	$(tr-env) \
+	$(tr-aws) lambda invoke \
+	--function-name $(dr-fn) \
+	--payload $$(base64 < $(dr-payload)) \
+	--endpoint-url=$(dr-endpoint) \
+	--debug \
+	test.json
 .PHONE: r
 
 # -- test --
@@ -65,15 +76,15 @@ test: t
 .PHONY: test
 
 t:
-	go test pkg/...
+	$(tt-go) test ./...
 .PHONY: t
 
 # -- infra --
-## in[f]ra; aliases f/start
+## in[f]ra; aliases f/plan
 infra: f
 .PHONY: infra
 
-f: f/start
+f: f/plan
 .PHONY: f
 
 ## start localstack
@@ -98,7 +109,7 @@ f/valid:
 
 ## apply planned infra
 f/apply:
-	$(tf-terraform) apply
+	$(tf-terraform) apply -auto-approve
 .PHONY: f/apply
 
 ## destroy infra

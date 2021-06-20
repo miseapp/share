@@ -4,30 +4,32 @@ import (
 	"mise-share/pkg/share"
 
 	"context"
-	"encoding/json"
-	"log"
-	"os"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func handleRequest(ctx context.Context, event events.SQSEvent) (string, error) {
-	// event
-	eventJson, _ := json.MarshalIndent(event, "", "  ")
-	log.Printf("EVENT: %s", eventJson)
+// -- types --
 
-	// environment variables
-	log.Printf("REGION: %s", os.Getenv("AWS_REGION"))
-	log.Println("ALL ENV VARS:")
-	for _, element := range os.Environ() {
-		log.Println(element)
-	}
+// Event (value) is the api event structure
+type Event struct {
+	Source *share.Source `json:"source"`
+}
 
-	// context method
-	deadline, _ := ctx.Deadline()
-	log.Printf("DEADLINE: %s", deadline)
+// EventSource (value) is the the source of a shared file
+type EventSource struct {
+	Url *string `json:"url"`
+}
 
+// -- impls --
+func handleRequest(ctx context.Context, event Event) (string, error) {
+	// init share command
+	share := share.New(
+		&share.Source{
+			Url: event.Source.Url,
+		},
+	)
+
+	// run command
 	return share.Call()
 }
 
