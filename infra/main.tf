@@ -30,7 +30,7 @@ provider "aws" {
 
 // s3: share url bucket
 resource "aws_s3_bucket" "share_files" {
-  bucket = var.share_files-name
+  bucket = var.share_files_name
   acl    = "public-read"
 
   website {
@@ -60,7 +60,7 @@ resource "aws_s3_bucket_policy" "share_files" {
 
 // dynamo: share kv store
 resource "aws_dynamodb_table" "share_count" {
-  name           = var.share_count-name
+  name           = var.share_count_name
   billing_mode   = "PROVISIONED"
   read_capacity  = 25
   write_capacity = 25
@@ -75,15 +75,15 @@ resource "aws_dynamodb_table" "share_count" {
 // lambda: share endpoint
 resource "aws_lambda_function" "share_add" {
   runtime          = "go1.x"
-  function_name    = var.share_add-name
-  handler          = var.share_add-name
-  filename         = var.share_add-archive
-  source_code_hash = filebase64sha256(var.share_add-archive)
+  function_name    = var.share_add_name
+  handler          = var.share_add_name
+  filename         = var.share_add_archive
+  source_code_hash = filebase64sha256(var.share_add_archive)
   role             = aws_iam_role.share_add.arn
 }
 
 resource "aws_iam_role" "share_add" {
-  name = var.share_add-iam
+  name = var.share_add_iam
 
   assume_role_policy = <<EOF
 {

@@ -1,6 +1,9 @@
 # go
 build
 
+# run
+test.json
+
 # terraform
 .terraform
 *.tfstate

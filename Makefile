@@ -1,3 +1,4 @@
+include .env
 include ./Makefile.base.mk
 
 # -- cosmetics --
@@ -6,20 +7,20 @@ help-colw = 7
 # -- constants --
 df-infra = infra
 df-tf = $(df-infra)/.terraform
-df-table = share.count
-df-id = share-files
+df-table = $(SHARE_COUNT_NAME)
+df-item-id = $(SHARE_FILES_NAME)
 db-entry = cmd/main.go
 db-build = build
-db-binary = $(db-build)/share.add
-db-archive = $(db-binary).zip
-dr-fn = share.add
+db-binary = $(SHARE_ADD_BINARY)
+db-archive = $(SHARE_ADD_ARCHIVE)
+dr-fn = $(SHARE_ADD_NAME)
 dr-payload = payload.json
-dr-endpoint = http://localhost:4566
+dr-endpoint = $(AWS_ENDPOINT)
 
 # -- tools --
 ti-brew = brew
 tf-dc = docker-compose
-tf-terraform = terraform -chdir="$(df-infra)"
+tf-terraform = . .env && terraform -chdir="$(df-infra)"
 tb-go = go
 tt-go = go
 tr-aws = aws
@@ -134,7 +135,7 @@ f/init:
 	$(tr-env) \
 	$(tr-aws) dynamodb put-item \
 	--table-name $(df-table) \
-	--item '{ "Id": {"S": "$(df-id)"}, "Count": {"N": "0"} }' \
+	--item '{ "Id": {"S": "$(df-item-id)"}, "Count": {"N": "0"} }' \
 	--endpoint-url=$(dr-endpoint) \
 	--debug
 .PHOYN: f/init
