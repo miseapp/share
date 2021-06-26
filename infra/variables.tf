@@ -1,29 +1,32 @@
+// TODO: figure out how to share env between terraform, makefile,
+// go test code
 variable "share_region" {
   type    = string
   default = "us-east-1"
 }
 
-variable "share_bucket-name" {
+// TODO: figure out if "share.files" works
+variable "share_files-name" {
   type    = string
-  default = "share.files"
+  default = "share-files"
 }
 
-variable "share_table-name" {
+variable "share_count-name" {
   type    = string
   default = "share.count"
 }
 
-variable "share_lambda-name" {
+variable "share_add-name" {
   type    = string
   default = "share.add"
 }
 
-variable "share_lambda-iam" {
+variable "share_add-iam" {
   type    = string
   default = "share.add-role"
 }
 
-variable "share_lambda-filename" {
+variable "share_add-archive" {
   type    = string
-  default = "../build/share.zip"
+  default = "../build/share.add.zip"
 }

@@ -1,9 +1,12 @@
 package files
 
 import (
+	"encoding/base64"
+	"os"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -13,21 +16,23 @@ import (
 
 // a repo for a collection of remote files
 type Files struct {
-	s3 *s3.S3
-	db *dynamodb.DynamoDB
+	S3 *s3.S3
+	Db *dynamodb.DynamoDB
 }
 
 // -- impls --
 func New() *Files {
 	// init aws session
 	session := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1"),
+		Endpoint:    aws.String(os.Getenv("AWS_ENDPOINT")),
+		Region:      aws.String("us-east-1"),
+		Credentials: credentials.NewEnvCredentials(),
 	}))
 
 	// init repo
 	return &Files{
-		s3: s3.New(session),
-		db: dynamodb.New(session),
+		S3: s3.New(session),
+		Db: dynamodb.New(session),
 	}
 }
 
@@ -37,20 +42,26 @@ func New() *Files {
 func (f *Files) Create(body string) (string, error) {
 	// atomically increment the counter
 	// see: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.AtomicCounters
-	res, err := f.db.UpdateItem(&dynamodb.UpdateItemInput{
+	res, err := f.Db.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String("share.count"),
 		Key: map[string]*dynamodb.AttributeValue{
-			"Id": {S: aws.String("share.files")},
+			"Id": {S: aws.String("share-files")},
 		},
-		UpdateExpression: aws.String("SET Count = Count + 1"),
+		ExpressionAttributeNames: map[string]*string{
+			"#C": aws.String("Count"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":incr": {N: aws.String("1")},
+		},
+		UpdateExpression: aws.String("SET #C = #C + :incr"),
 		ReturnValues:     aws.String(dynamodb.ReturnValueUpdatedNew),
-		TableName:        aws.String("share.count"),
 	})
 
 	if err != nil {
 		return "", err
 	}
 
-	// this shouldn't happen, UpdateItem inserts whent he key is missing
+	// this shouldn't happen, UpdateItem inserts when the key is missing
 	if res == nil {
 		return "", &MissingCountError{}
 	}
@@ -61,7 +72,7 @@ func (f *Files) Create(body string) (string, error) {
 		return "", err
 	}
 
-	// encode the filename
+	// encode the redirect filename
 	filename := Filename(count)
 
 	s, err := filename.String()
@@ -69,19 +80,23 @@ func (f *Files) Create(body string) (string, error) {
 		return "", err
 	}
 
-	// build a file
+	// build the redirect file
 	file := NewFile(body)
 
-	// create the file
-	f.s3.PutObject(&s3.PutObjectInput{
+	// insert the redirect file
+	_, err = f.S3.PutObject(&s3.PutObjectInput{
 		Key:             aws.String(s),
 		Body:            file.Body,
 		ContentType:     aws.String("text/html"),
 		ContentLength:   aws.Int64(int64(file.Length)),
 		ContentLanguage: aws.String("en-US"),
-		ContentMD5:      aws.String(string(file.Hash[:])),
-		Bucket:          aws.String("share.files"),
+		ContentMD5:      aws.String(base64.StdEncoding.EncodeToString(file.Hash[:])),
+		Bucket:          aws.String("share-files"),
 	})
+
+	if err != nil {
+		return "", err
+	}
 
 	return s, nil
 }

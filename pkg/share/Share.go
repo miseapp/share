@@ -16,8 +16,15 @@ type Share struct {
 
 // New inits a new share command
 func New(source *Source) *Share {
+	return Init(
+		files.New(),
+		source,
+	)
+}
+
+func Init(files *files.Files, source *Source) *Share {
 	return &Share{
-		files:  files.New(),
+		files:  files,
 		source: source,
 	}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // -- tests --
-func TestEncoding(t *testing.T) {
+func TestEncoding_U(t *testing.T) {
 	filename := Filename(61)
 	str, _ := filename.String()
 	assert.Equal(t, "Z.html", str)
@@ -17,7 +17,7 @@ func TestEncoding(t *testing.T) {
 	assert.Equal(t, "01.html", str)
 }
 
-func TestEncodingZero(t *testing.T) {
+func TestEncodingZero_U(t *testing.T) {
 	filename := Filename(0)
 	str, _ := filename.String()
 	assert.Equal(t, "0.html", str)

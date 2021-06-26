@@ -11,10 +11,10 @@ terraform {
 
 // configure localstack provider
 provider "aws" {
-  access_key                  = "mock_access_key"
   region                      = var.share_region
   s3_force_path_style         = true
-  secret_key                  = "mock_secret_key"
+  access_key                  = "test"
+  secret_key                  = "test"
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
@@ -29,8 +29,8 @@ provider "aws" {
 }
 
 // s3: share url bucket
-resource "aws_s3_bucket" "share" {
-  bucket = var.share_bucket-name
+resource "aws_s3_bucket" "share_files" {
+  bucket = var.share_files-name
   acl    = "public-read"
 
   website {
@@ -39,8 +39,8 @@ resource "aws_s3_bucket" "share" {
   }
 }
 
-resource "aws_s3_bucket_policy" "share" {
-  bucket = aws_s3_bucket.share.id
+resource "aws_s3_bucket_policy" "share_files" {
+  bucket = aws_s3_bucket.share_files.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -50,8 +50,8 @@ resource "aws_s3_bucket_policy" "share" {
         Principal = "*"
         Action    = "s3:GetObject"
         Resource = [
-          "${aws_s3_bucket.share.arn}",
-          "${aws_s3_bucket.share.arn}/*",
+          "${aws_s3_bucket.share_files.arn}",
+          "${aws_s3_bucket.share_files.arn}/*",
         ]
       },
     ]
@@ -59,37 +59,31 @@ resource "aws_s3_bucket_policy" "share" {
 }
 
 // dynamo: share kv store
-resource "aws_dynamodb_table" "share" {
-  name           = var.share_table-name
+resource "aws_dynamodb_table" "share_count" {
+  name           = var.share_count-name
   billing_mode   = "PROVISIONED"
   read_capacity  = 25
   write_capacity = 25
   hash_key       = "Id"
-  range_key      = "Count"
 
   attribute {
     name = "Id"
     type = "S"
   }
-
-  attribute {
-    name = "Count"
-    type = "N"
-  }
 }
 
 // lambda: share endpoint
-resource "aws_lambda_function" "share" {
-  function_name    = var.share_lambda-name
-  filename         = var.share_lambda-filename
-  role             = aws_iam_role.share_lambda.arn
-  handler          = "exports.test"
-  source_code_hash = filebase64sha256(var.share_lambda-filename)
+resource "aws_lambda_function" "share_add" {
   runtime          = "go1.x"
+  function_name    = var.share_add-name
+  handler          = var.share_add-name
+  filename         = var.share_add-archive
+  source_code_hash = filebase64sha256(var.share_add-archive)
+  role             = aws_iam_role.share_add.arn
 }
 
-resource "aws_iam_role" "share_lambda" {
-  name = var.share_lambda-iam
+resource "aws_iam_role" "share_add" {
+  name = var.share_add-iam
 
   assume_role_policy = <<EOF
 {

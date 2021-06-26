@@ -6,9 +6,11 @@ help-colw = 7
 # -- constants --
 df-infra = infra
 df-tf = $(df-infra)/.terraform
+df-table = share.count
+df-id = share-files
 db-entry = cmd/main.go
 db-build = build
-db-binary = $(db-build)/share
+db-binary = $(db-build)/share.add
 db-archive = $(db-binary).zip
 dr-fn = share.add
 dr-payload = payload.json
@@ -16,8 +18,7 @@ dr-endpoint = http://localhost:4566
 
 # -- tools --
 ti-brew = brew
-tf-docker = docker
-tf-localstack = localstack
+tf-dc = docker-compose
 tf-terraform = terraform -chdir="$(df-infra)"
 tb-go = go
 tt-go = go
@@ -25,14 +26,20 @@ tr-aws = aws
 tr-env = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds
 
 # -- init --
-## setup dev env
+## [i]init dev env
 init: i
 .PHONY: init
 
 i: i/pre
-	$(ti-brew) bundle -v
+	$(ti-brew) bundle -v --no-upgrade
 .PHONY: i
 
+## updates deps
+i/upgr:
+	$(ti-brew) bundle -v
+.PHONY: i/upadte
+
+# -- i/helpers
 i/pre:
 ifeq ("$(shell command -v $(ti-brew))", "")
 	$(info ✘ brew is not installed, please see:)
@@ -49,6 +56,11 @@ build: b
 b:
 	GOOS=linux GOARCH=amd64 $(tb-go) build -o $(db-binary) $(db-entry)
 .PHONY: b
+
+## clean the build
+b/clean:
+	rm -rf $(db-build)
+.PHONY: b/clean
 
 ## build and archive
 b/arch: b
@@ -71,13 +83,18 @@ r:
 .PHONE: r
 
 # -- test --
-## run tests
+## run [t]ests
 test: t
 .PHONY: test
 
 t:
-	$(tt-go) test ./...
+	$(tt-go) test ./... -run "_U"
 .PHONY: t
+
+## runs unit & int tests
+t/all:
+	$(tt-go) test ./...
+.PHONY: t/all
 
 # -- infra --
 ## in[f]ra; aliases f/plan
@@ -89,12 +106,12 @@ f: f/plan
 
 ## start localstack
 f/start:
-	$(tf-localstack) start
+	$(tf-dc) up
 .PHONY: f/start
 
 ## stop localstack
 f/stop:
-	$(tf-docker) stop localstack_main
+	$(tf-dc) down
 .PHONY: f/stop
 
 ## plan dev infra
@@ -112,8 +129,18 @@ f/apply:
 	$(tf-terraform) apply -auto-approve
 .PHONY: f/apply
 
+## init infra state
+f/init:
+	$(tr-env) \
+	$(tr-aws) dynamodb put-item \
+	--table-name $(df-table) \
+	--item '{ "Id": {"S": "$(df-id)"}, "Count": {"N": "0"} }' \
+	--endpoint-url=$(dr-endpoint) \
+	--debug
+.PHOYN: f/init
+
 ## destroy infra
-f/reset:
+f/clean:
 	$(tf-terraform) destroy
 .PHONY: f/reset
 

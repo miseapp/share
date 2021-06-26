@@ -7,7 +7,7 @@ import (
 )
 
 // -- tests --
-func TestHtml(t *testing.T) {
+func TestHtml_U(t *testing.T) {
 	share := NewSharedFile(
 		&Source{
 			Url: strp("https://httpbin.org/get"),
