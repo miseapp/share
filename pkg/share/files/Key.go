@@ -16,23 +16,14 @@ const (
 
 // -- types --
 
-// an index-based html filename
-type Filename int
+// an index-based file key
+type Key int
 
 // -- impls --
 
-// builds a base62-encoded filename for an html file
-func (f *Filename) String() (string, error) {
-	if s, err := f.Encode(); err != nil {
-		return "", err
-	} else {
-		return fmt.Sprintf("%s.html", s), nil
-	}
-}
-
-// returns the base62-encoded index
+// returns the base62-encoded key
 // see: https://gist.github.com/Pagliacii/dca0f6b732c19045d258eaee81917071
-func (f *Filename) Encode() (string, error) {
+func (f *Key) Encode() (string, error) {
 	digits := int(*f)
 
 	// return "0" when i == 0
@@ -58,7 +49,7 @@ func (f *Filename) Encode() (string, error) {
 	return sb.String(), nil
 }
 
-func (*Filename) GetChar(ord int) (rune, error) {
+func (*Key) GetChar(ord int) (rune, error) {
 	switch {
 	case ord < 10:
 		return rune(ord + DIGIT_OFFSET), nil

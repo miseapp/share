@@ -34,7 +34,7 @@ func NewSharedFile(source *Source) *SharedFile {
 }
 
 // returns the html representation of the shared file
-func (s *SharedFile) AsHtml() string {
+func (s *SharedFile) ToBody(key string) string {
 	reg, err := regexp.Compile("[\t\n]+")
 	if err != nil {
 		log.Fatal(err)
@@ -44,7 +44,11 @@ func (s *SharedFile) AsHtml() string {
 		<html>
 			<head>
 				<meta name="mise-share-url" content="%s">
+				<meta property="og:title" content="Check out this recipe!">
+				<meta property="og:type" content="website">
+				<meta property="og:image" content="https://images.squarespace-cdn.com/content/v1/5ffb69ddfe0aa2509285f006/1614557697674-RZGESXDJJ4CMQLTIFOZI/Stirring.png">
+				<meta property="og:url" content="https://share.miseapp.co/%s">
 			</head>
 		</html>
-	`, ""), *s.source.Url)
+	`, ""), *s.source.Url, key)
 }

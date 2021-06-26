@@ -2,6 +2,7 @@ package files
 
 import (
 	"encoding/base64"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -38,8 +39,8 @@ func New() *Files {
 
 // -- i/commands
 
-// creates a new file with the given body, returning the filename
-func (f *Files) Create(body string) (string, error) {
+// creates a new file with the given content, returning the file key
+func (f *Files) Create(content FileContent) (string, error) {
 	// atomically increment the counter
 	// see: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.AtomicCounters
 	res, err := f.Db.UpdateItem(&dynamodb.UpdateItemInput{
@@ -72,20 +73,15 @@ func (f *Files) Create(body string) (string, error) {
 		return "", err
 	}
 
-	// encode the redirect filename
-	filename := Filename(count)
-
-	s, err := filename.String()
+	// build the redirect file
+	file, err := NewFile(count, content)
 	if err != nil {
 		return "", err
 	}
 
-	// build the redirect file
-	file := NewFile(body)
-
 	// insert the redirect file
 	_, err = f.S3.PutObject(&s3.PutObjectInput{
-		Key:             aws.String(s),
+		Key:             aws.String(fmt.Sprintf("%s.html", file.Key)),
 		Body:            file.Body,
 		ContentType:     aws.String("text/html"),
 		ContentLength:   aws.Int64(int64(file.Length)),
@@ -98,5 +94,5 @@ func (f *Files) Create(body string) (string, error) {
 		return "", err
 	}
 
-	return s, nil
+	return file.Key, nil
 }

@@ -7,13 +7,14 @@ import (
 )
 
 // -- tests --
-func TestHtml_U(t *testing.T) {
+func TestToBody_U(t *testing.T) {
 	share := NewSharedFile(
 		&Source{
 			Url: strp("https://httpbin.org/get"),
 		},
 	)
 
-	html := share.AsHtml()
+	html := share.ToBody("test")
 	assert.Contains(t, html, `<meta name="mise-share-url" content="https://httpbin.org/get">`)
+	assert.Contains(t, html, `<meta property="og:url" content="https://share.miseapp.co/test">`)
 }

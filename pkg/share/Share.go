@@ -34,6 +34,6 @@ func Init(files *files.Files, source *Source) *Share {
 // invokes the share command
 func (s *Share) Call() (string, error) {
 	shared := NewSharedFile(s.source)
-	res, err := s.files.Create(shared.AsHtml())
+	res, err := s.files.Create(shared)
 	return res, err
 }
