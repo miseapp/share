@@ -26,14 +26,14 @@ tt-go = go
 tr-aws = aws
 tr-env = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds
 
-# -- init --
-## [i]init dev env
-init: i
-.PHONY: init
+## -- init (i) --
+$(eval $(call alias, init, i/0))
+$(eval $(call alias, i, i/0))
 
-i: i/pre
+## init dev env
+i/0: i/pre
 	$(ti-brew) bundle -v --no-upgrade
-.PHONY: i
+.PHONY: i/0
 
 ## updates deps
 i/upgr:
@@ -49,31 +49,31 @@ ifeq ("$(shell command -v $(ti-brew))", "")
 endif
 .PHONY: i/pre
 
-# -- build --
-## [b]uild handler fn
-build: b
-.PHONY: build
+## -- build (b) --
+$(eval $(call alias, build, b/0))
+$(eval $(call alias, b, b/0))
 
-b:
+## build handler fn
+b/0:
 	GOOS=linux GOARCH=amd64 $(tb-go) build -o $(db-binary) $(db-entry)
-.PHONY: b
+.PHONY: b/0
 
-## clean the build
-b/clean:
-	rm -rf $(db-build)
-.PHONY: b/clean
-
-## build and archive
+## build & archive
 b/arch: b
 	zip $(db-archive) $(db-binary)
 .PHONY: b/arch
 
-# -- run --
-## [r]un handler fn
-run: r
-.PHONY: run
+## clean build dir
+b/clean:
+	rm -rf $(db-build)
+.PHONY: b/clean
 
-r:
+## -- run (r) --
+$(eval $(call alias, run, r/0))
+$(eval $(call alias, r, r/0))
+
+## call local handler fn
+r/0: r
 	$(tr-env) \
 	$(tr-aws) lambda invoke \
 	--function-name $(dr-fn) \
@@ -81,64 +81,63 @@ r:
 	--endpoint-url=$(dr-endpoint) \
 	--debug \
 	test.json
-.PHONE: r
+.PHONY: r/0
 
-# -- test --
-## run [t]ests
-test: t
-.PHONY: test
+## -- test (t) --
+$(eval $(call alias, test, t/0))
+$(eval $(call alias, t, t/0))
 
-t:
+## run tests
+t/0:
 	$(tt-go) test ./... -run "_U"
-.PHONY: t
+.PHONY: t/0
 
-## runs unit & int tests
+## run unit & int tests
 t/all:
 	$(tt-go) test ./...
 .PHONY: t/all
 
-# -- infra --
-## in[f]ra; aliases f/plan
-infra: f
-.PHONY: infra
+## -- infra (f) --
+$(eval $(call alias, infra, f/0))
+$(eval $(call alias, f, f/0))
 
-f: f/plan
-.PHONY: f
+## alias for f/plan
+f/0: f/plan
+.PHONY: f/0
 
-## start localstack
-f/start:
+## run localstack
+f/dev:
 	$(tf-dc) up
 .PHONY: f/start
 
-## stop localstack
-f/stop:
-	$(tf-dc) down
-.PHONY: f/stop
+## run plan->apply->seed
+f/setup: f/plan f/apply f/seed
+.PHONY: f/scaffold
 
-## plan dev infra
+## create infra migration plan
 f/plan: $(df-tf)
 	$(tf-terraform) plan
 .PHONY: f
 
-## validate infra
+## validate plan
 f/valid:
 	$(tf-terraform) validate
 .PHONY: f/validate
 
-## apply planned infra
+## apply migraition plan
 f/apply:
 	$(tf-terraform) apply -auto-approve
 .PHONY: f/apply
 
-## init infra state
-f/init:
+## seed initial state
+f/seed:
 	$(tr-env) \
 	$(tr-aws) dynamodb put-item \
 	--table-name $(df-table) \
-	--item '{ "Id": {"S": "$(df-item-id)"}, "Count": {"N": "0"} }' \
+	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }' \
 	--endpoint-url=$(dr-endpoint) \
 	--debug
-.PHOYN: f/init
+.PHOYN: f/seed
 
 ## destroy infra
 f/clean:

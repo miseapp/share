@@ -76,7 +76,7 @@ resource "aws_dynamodb_table" "share_count" {
 resource "aws_lambda_function" "share_add" {
   runtime          = "go1.x"
   function_name    = var.share_add_name
-  handler          = var.share_add_name
+  handler          = var.share_add_binary
   filename         = var.share_add_archive
   source_code_hash = filebase64sha256(var.share_add_archive)
   role             = aws_iam_role.share_add.arn

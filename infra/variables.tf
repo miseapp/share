@@ -15,11 +15,15 @@ variable "share_add_name" {
   type = string
 }
 
-variable "share_add_iam" {
-  type    = string
-  default = "share.add-role"
+variable "share_add_binary" {
+  type = string
 }
 
 variable "share_add_archive" {
   type = string
+}
+
+variable "share_add_iam" {
+  type    = string
+  default = "share.add-role"
 }
