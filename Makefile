@@ -2,7 +2,7 @@ include .env
 include ./Makefile.base.mk
 
 # -- cosmetics --
-help-colw = 7
+help-colw = 8
 
 # -- constants --
 df-infra = infra
@@ -79,9 +79,19 @@ r/0: r
 	--function-name $(dr-fn) \
 	--payload $$(base64 < $(dr-payload)) \
 	--endpoint-url=$(dr-endpoint) \
+	--log-type Tail \
 	--debug \
 	test.json
 .PHONY: r/0
+
+## read logs
+r/logs:
+	$(tr-env) \
+	$(tr-aws) logs get-log-events \
+	--log-group-name /aws/lambda/$(dr-fn) \
+	--log-stream-name $$(/bin/cat out) \
+	--limit 5
+.PHONY: r/logs
 
 ## -- test (t) --
 $(eval $(call alias, test, t/0))
@@ -111,8 +121,12 @@ f/dev:
 .PHONY: f/start
 
 ## run plan->apply->seed
-f/setup: f/plan f/apply f/seed
+f/setup: f/update f/seed
 .PHONY: f/scaffold
+
+## run plan->apply
+f/update: f/plan f/apply
+.PHONY: f/update
 
 ## create infra migration plan
 f/plan: $(df-tf)
@@ -132,6 +146,8 @@ f/apply:
 ## seed initial state
 f/seed:
 	$(tr-env) \
+	AWS_ACCESS_KEY_ID=test \
+	AWS_SECRET_ACCESS_KEY=test \
 	$(tr-aws) dynamodb put-item \
 	--table-name $(df-table) \
 	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }' \

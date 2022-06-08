@@ -15,11 +15,17 @@ type Share struct {
 // -- impls --
 
 // New inits a new share command
-func New(source *Source) *Share {
-	return Init(
-		files.New(),
-		source,
-	)
+func New(source *Source) (*Share, error) {
+	// init files service
+	files, err := files.New()
+	if err != nil {
+		return nil, err
+	}
+
+	// init command
+	share := Init(files, source)
+
+	return share, nil
 }
 
 func Init(files *files.Files, source *Source) *Share {

@@ -1,3 +1,18 @@
+# in your makefile:
+#   1. include ./Makefile.base.mk".
+#   2. help-colw = <num> # the len of ur longest target
+#
+# to make stuff show up in the help, write magic comments starting
+# w/ "##", for example..
+#
+# to define a section:
+#   ## -- <name> <desc...> --
+#
+# to define a target:
+#   ## <desc>
+#   <name>: ...
+
+# -- config --
 .DEFAULT_GOAL := help
 
 # -- cosmetics --
@@ -9,13 +24,18 @@ gr = \033[0;90m
 gl = \033[4;90m
 
 # -- functions --
+# creates a phony alias for another target, use like:
+# 	$(eval $(call alias, <alias>, <original>))
 define alias
 $(1): $(2)
 .PHONY: $(1)
 endef
 
 # -- help --
+$(eval $(call alias, h, help))
+
 help:
+	echo "$$HELP"
 	@awk "$$HELP" $(MAKEFILE_LIST)
 .PHONY: help
 
@@ -30,7 +50,7 @@ BEGIN {
 	print "$(gl)targets$(rs)"
 }
 
-# match and print sections
+# match and print sections:
 /^## -- .* --$$/ {
 	# parse name/desc
 	name = $$3
@@ -41,14 +61,14 @@ BEGIN {
 	printf "%s  $(ul)%s$(rs)%-*s$(gr) %s$(rs)\n",
 		(k_nsec == 0) ? "" : "\n",
 		name,
-		7 - nlen,
+		$(help-colw) - nlen,
 		"",
 		desc
 
 	# incr section counter
 	k_nsec++
 
-	# consume line so next regex doesn't also match
+	# consume line so next regex doesn't match
 	getline
 }
 

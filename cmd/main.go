@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"mise-share/pkg/share"
 
 	"context"
@@ -22,12 +23,18 @@ type EventSource struct {
 
 // -- impls --
 func handleRequest(ctx context.Context, event Event) (string, error) {
+	log.Println("trying to create file")
+
 	// init share command
-	share := share.New(
+	share, err := share.New(
 		&share.Source{
 			Url: event.Source.Url,
 		},
 	)
+
+	if err != nil {
+		log.Println("[main.handleRequest] could not create share service", err)
+	}
 
 	// run command
 	return share.Call()
