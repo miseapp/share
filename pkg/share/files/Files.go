@@ -36,12 +36,6 @@ func New() (*Files, error) {
 		return nil, err
 	}
 
-	// session := session.Must(session.NewSession(&aws.Config{
-	// 	Endpoint:    aws.String(os.Getenv("AWS_ENDPOINT")),
-	// 	Region:      aws.String("us-east-1"),
-	// 	Credentials: credentials.NewEnvCredentials(),
-	// }))
-
 	// init repo
 	files := &Files{
 		S3: s3.NewFromConfig(cfg),

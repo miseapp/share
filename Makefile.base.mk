@@ -35,7 +35,6 @@ endef
 $(eval $(call alias, h, help))
 
 help:
-	echo "$$HELP"
 	@awk "$$HELP" $(MAKEFILE_LIST)
 .PHONY: help
 

@@ -111,14 +111,28 @@ t/all:
 $(eval $(call alias, infra, f/0))
 $(eval $(call alias, f, f/0))
 
-## alias for f/plan
-f/0: f/plan
+## alias for f/dev
+f/0: f/dev
 .PHONY: f/0
 
+## prepare & run dev stack
+f/dev: f/up f/setup f/tail
+.PHONY: f/dev
+
 ## run localstack
-f/dev:
-	$(tf-dc) up
-.PHONY: f/start
+f/up:
+	$(tf-dc) up -d
+.PHONY: f/up
+
+## tail localstack logs
+f/tail:
+	$(tf-dc) logs -f -t
+.PHONY: f/tail
+
+## stop localstack
+f/down:
+	$(tf-dc) down
+.PHONY: f/down
 
 ## run plan->apply->seed
 f/setup: f/update f/seed
