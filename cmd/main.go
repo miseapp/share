@@ -23,8 +23,6 @@ type EventSource struct {
 
 // -- impls --
 func handleRequest(ctx context.Context, event Event) (string, error) {
-	log.Println("trying to create file")
-
 	// init share command
 	share, err := share.New(
 		&share.Source{

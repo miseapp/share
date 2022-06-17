@@ -1,11 +1,15 @@
 # go
 build
 
+# tmp
+tmp
+
 # run
 test.json
 
 # terraform
 .terraform
+terraform.tfplan
 *.tfstate
 *.tfstate.*
 *.tfvars

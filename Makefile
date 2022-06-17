@@ -7,8 +7,11 @@ help-colw = 8
 # -- constants --
 df-infra = infra
 df-tf = $(df-infra)/.terraform
+df-plan = terraform.tfplan
 df-table = $(SHARE_COUNT_NAME)
 df-item-id = $(SHARE_FILES_NAME)
+df-app = ../app
+df-app-cfg-dev = $(df-app)/Mise/InfoDev.plist
 db-entry = cmd/main.go
 db-build = build
 db-binary = $(SHARE_ADD_BINARY)
@@ -21,6 +24,7 @@ dr-endpoint = $(AWS_ENDPOINT)
 ti-brew = brew
 tf-dc = docker-compose
 tf-terraform = . .env && terraform -chdir="$(df-infra)"
+tf-plist = plutil
 tb-go = go
 tt-go = go
 tr-aws = aws
@@ -124,6 +128,11 @@ f/up:
 	$(tf-dc) up -d
 .PHONY: f/up
 
+## run localstack in foreground
+f/upf:
+	$(tf-dc) up
+.PHONY: f/upf
+
 ## tail localstack logs
 f/tail:
 	$(tf-dc) logs -f -t
@@ -139,29 +148,30 @@ f/setup: f/update f/seed
 .PHONY: f/scaffold
 
 ## run plan->apply
-f/update: f/plan f/apply
+f/update: f/plan f/apply f/url/dev
 .PHONY: f/update
 
-## create infra migration plan
+## create migration plan
 f/plan: $(df-tf)
-	$(tf-terraform) plan
+	$(tf-terraform) plan -out=$(df-plan)
 .PHONY: f
 
-## validate plan
+## apply migration plan
+f/apply:
+	$(tf-terraform) apply -auto-approve $(df-plan)
+.PHONY: f/apply
+
+## validate configuration
 f/valid:
 	$(tf-terraform) validate
 .PHONY: f/validate
-
-## apply migraition plan
-f/apply:
-	$(tf-terraform) apply -auto-approve
-.PHONY: f/apply
 
 ## seed initial state
 f/seed:
 	$(tr-env) \
 	AWS_ACCESS_KEY_ID=test \
 	AWS_SECRET_ACCESS_KEY=test \
+	AWS_PAGER="" \
 	$(tr-aws) dynamodb put-item \
 	--table-name $(df-table) \
 	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }' \
@@ -173,6 +183,18 @@ f/seed:
 f/clean:
 	$(tf-terraform) destroy
 .PHONY: f/reset
+
+## sync the dev share url
+f/url/dev:
+	$(tf-plist) \
+	-replace "Share-URL" \
+	-string $$(\
+		$(tf-terraform) output share_add_url \
+		| tr -d '"' \
+		| sed 's/us-east-1.amazonaws.com/localhost.localstack.cloud:4566/'\
+	) \
+	$(df-app-cfg-dev)
+.PHONY: b/url
 
 # -- i/helpers
 $(df-tf):

@@ -30,6 +30,7 @@ func New() (*Files, error) {
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
 		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(ResolveEndpoint)),
+		config.WithClientLogMode(aws.LogRequestWithBody|aws.LogResponseWithBody),
 	)
 
 	if err != nil {
@@ -49,8 +50,6 @@ func New() (*Files, error) {
 
 // creates a new file with the given content, returning the file key
 func (f *Files) Create(content FileContent) (string, error) {
-	log.Println("trying to update count")
-
 	// atomically increment the counter
 	// see: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.AtomicCounters
 	res, err := f.Db.UpdateItem(
