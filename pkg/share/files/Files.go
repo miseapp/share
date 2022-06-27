@@ -71,7 +71,7 @@ func (f *Files) Create(content FileContent) (string, error) {
 	)
 
 	if err != nil {
-		log.Println("[files.Create] update failed", err)
+		log.Println("[Files.Create] update failed", err)
 		return "", err
 	}
 
@@ -87,13 +87,13 @@ func (f *Files) Create(content FileContent) (string, error) {
 
 	err = attributevalue.UnmarshalMap(res.Attributes, &rec)
 	if err != nil {
-		log.Println("[files.Create] could not unmarshal response", err)
+		log.Println("[Files.Create] could not unmarshal response", err)
 		return "", err
 	}
 
 	count, err := strconv.Atoi(rec.Count)
 	if err != nil {
-		log.Println("[files.Create] could not parse `Count` as integer", err)
+		log.Println("[Files.Create] could not parse `Count` as integer", err)
 		return "", err
 	}
 
@@ -104,7 +104,6 @@ func (f *Files) Create(content FileContent) (string, error) {
 	}
 
 	// insert the redirect file
-	log.Println("trying to save file")
 	_, err = f.S3.PutObject(
 		context.TODO(),
 		&s3.PutObjectInput{

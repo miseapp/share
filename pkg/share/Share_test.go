@@ -3,10 +3,10 @@ package share
 import (
 	"context"
 	"mise-share/pkg/share/files"
+	"mise-share/pkg/share/test"
 	"os"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,7 @@ func TestShare_I(t *testing.T) {
 	files.Db.PutItem(
 		context.TODO(),
 		&dynamodb.PutItemInput{
-			TableName: aws.String("share.count"),
+			TableName: test.Str("share.count"),
 			Item: map[string]types.AttributeValue{
 				"Id":    &types.AttributeValueMemberS{Value: "share-files"},
 				"Count": &types.AttributeValueMemberN{Value: "0"},
@@ -41,7 +41,7 @@ func TestShare_I(t *testing.T) {
 	share := Init(
 		files,
 		&Source{
-			Url: strp("https://httpbin.org/get"),
+			Url: test.Str("https://httpbin.org/get"),
 		},
 	)
 

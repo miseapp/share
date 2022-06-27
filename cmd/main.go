@@ -1,41 +1,60 @@
 package main
 
 import (
-	"log"
 	"mise-share/pkg/share"
+	"net/http"
 
 	"context"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-// -- types --
-
-// Event (value) is the api event structure
-type Event struct {
-	Source *share.Source `json:"source"`
-}
-
-// EventSource (value) is the the source of a shared file
-type EventSource struct {
-	Url *string `json:"url"`
-}
-
 // -- impls --
-func handleRequest(ctx context.Context, event Event) (string, error) {
+func handleRequest(ctx context.Context, req Request) (string, error) {
+	// validate the request
+	if req.Source == nil {
+		return EncodeFailure(
+			http.StatusBadRequest,
+			"the request was missing the required field: 'source'",
+		)
+	}
+
+	if req.Source.Url == nil {
+		return EncodeFailure(
+			http.StatusBadRequest,
+			"the request was missing the required field: 'source.url'",
+		)
+	}
+
 	// init share command
-	share, err := share.New(
+	cmd, err := share.New(
 		&share.Source{
-			Url: event.Source.Url,
+			Url: req.Source.Url,
 		},
 	)
 
 	if err != nil {
-		log.Println("[main.handleRequest] could not create share service", err)
+		return EncodeFailure(
+			http.StatusInternalServerError,
+			err.Error(),
+		)
 	}
 
 	// run command
-	return share.Call()
+	url, err := cmd.Call()
+
+	// return result structure
+	if err == nil {
+		return EncodeSuccess(
+			http.StatusOK,
+			url,
+		)
+	} else {
+		return EncodeFailure(
+			http.StatusInternalServerError,
+			err.Error(),
+		)
+	}
 }
 
 func main() {

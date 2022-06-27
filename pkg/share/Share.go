@@ -1,6 +1,8 @@
 package share
 
-import "mise-share/pkg/share/files"
+import (
+	"mise-share/pkg/share/files"
+)
 
 // -- types --
 
@@ -39,7 +41,8 @@ func Init(files *files.Files, source *Source) *Share {
 
 // invokes the share command
 func (s *Share) Call() (string, error) {
+	// create the shared file
 	shared := NewSharedFile(s.source)
-	res, err := s.files.Create(shared)
-	return res, err
+	url, err := s.files.Create(shared)
+	return url, err
 }

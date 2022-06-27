@@ -148,7 +148,7 @@ f/setup: f/update f/seed
 .PHONY: f/scaffold
 
 ## run plan->apply
-f/update: f/plan f/apply f/url/dev
+f/update: f/plan f/apply f/url
 .PHONY: f/update
 
 ## create migration plan
@@ -185,7 +185,7 @@ f/clean:
 .PHONY: f/reset
 
 ## sync the dev share url
-f/url/dev:
+f/url:
 	$(tf-plist) \
 	-replace "Share-URL" \
 	-string $$(\
@@ -194,7 +194,7 @@ f/url/dev:
 		| sed 's/us-east-1.amazonaws.com/localhost.localstack.cloud:4566/'\
 	) \
 	$(df-app-cfg-dev)
-.PHONY: b/url
+.PHONY: f/url
 
 # -- i/helpers
 $(df-tf):
