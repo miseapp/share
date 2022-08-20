@@ -6,20 +6,36 @@ import (
 
 	"context"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
 // -- impls --
-func handleRequest(ctx context.Context, req Request) (string, error) {
+func handleRequest(
+	ctx context.Context,
+	req events.LambdaFunctionURLRequest,
+) (
+	events.LambdaFunctionURLResponse,
+	error,
+) {
+	// decode the body
+	body, err := DecodeRequestBody(req.Body)
+	if err != nil {
+		return EncodeFailure(
+			http.StatusBadRequest,
+			err.Error(),
+		)
+	}
+
 	// validate the request
-	if req.Source == nil {
+	if body.Source == nil {
 		return EncodeFailure(
 			http.StatusBadRequest,
 			"the request was missing the required field: 'source'",
 		)
 	}
 
-	if req.Source.Url == nil {
+	if body.Source.Url == nil {
 		return EncodeFailure(
 			http.StatusBadRequest,
 			"the request was missing the required field: 'source.url'",
@@ -29,7 +45,7 @@ func handleRequest(ctx context.Context, req Request) (string, error) {
 	// init share command
 	cmd, err := share.New(
 		&share.Source{
-			Url: req.Source.Url,
+			Url: body.Source.Url,
 		},
 	)
 

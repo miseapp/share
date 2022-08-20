@@ -30,6 +30,12 @@ tt-go = go
 tr-aws = aws
 tr-env = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds
 
+# -- state --
+sf-url = \
+	$(tf-terraform) output share_add_url \
+	| tr -d '"' \
+	| sed 's/us-east-1.amazonaws.com/localhost.localstack.cloud:4566/'
+
 ## -- init (i) --
 $(eval $(call alias, init, i/0))
 $(eval $(call alias, i, i/0))
@@ -77,16 +83,21 @@ $(eval $(call alias, run, r/0))
 $(eval $(call alias, r, r/0))
 
 ## call local handler fn
-r/0: r
-	$(tr-env) \
-	$(tr-aws) lambda invoke \
-	--function-name $(dr-fn) \
-	--payload $$(base64 < $(dr-payload)) \
-	--endpoint-url=$(dr-endpoint) \
-	--log-type Tail \
-	--debug \
-	test.json
+r/0:
+	curl \
+	$$($(sf-url))
 .PHONY: r/0
+
+# r/0:
+# 	$(tr-env) \
+# 	$(tr-aws) lambda invoke \
+# 	--function-name $(dr-fn) \
+# 	--payload $$(base64 < $(dr-payload)) \
+# 	--endpoint-url=$(dr-endpoint) \
+# 	--log-type Tail \
+# 	--debug \
+# 	test.json
+# .PHONY: r/0
 
 ## read logs
 r/logs:
@@ -148,7 +159,7 @@ f/setup: f/update f/seed
 .PHONY: f/scaffold
 
 ## run plan->apply
-f/update: f/plan f/apply f/url
+f/update: f/plan f/apply f/u/sync
 .PHONY: f/update
 
 ## create migration plan
@@ -184,17 +195,18 @@ f/clean:
 	$(tf-terraform) destroy
 .PHONY: f/reset
 
-## sync the dev share url
+## show the dev share url
 f/url:
-	$(tf-plist) \
-	-replace "Share-URL" \
-	-string $$(\
-		$(tf-terraform) output share_add_url \
-		| tr -d '"' \
-		| sed 's/us-east-1.amazonaws.com/localhost.localstack.cloud:4566/'\
-	) \
-	$(df-app-cfg-dev)
+	echo "$$($(sf-url))"
 .PHONY: f/url
+
+## sync the dev share url
+f/u/sync:
+	# $(tf-plist) \
+	# -replace "Share-URL" \
+	# -string $$($(sf-url)) \
+	# $(df-app-cfg-dev)
+.PHONY: f/u/sync
 
 # -- i/helpers
 $(df-tf):

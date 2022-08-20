@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -32,16 +31,28 @@ type ResponseFailure struct {
 }
 
 // -- impls --
-// encodes a success result to a string response
-func EncodeSuccess(status int, url string) (string, error) {
+// encodes a success result to a lambda url response
+func EncodeSuccess(
+	status int,
+	url string,
+) (
+	events.LambdaFunctionURLResponse,
+	error,
+) {
 	return encode(status, &Response{
 		Success: &ResponseSuccess{Url: url},
 		Failure: nil,
 	})
 }
 
-// encodes a failure result to a string response
-func EncodeFailure(status int, message string) (string, error) {
+// encodes a failure result to a lambda url response
+func EncodeFailure(
+	status int,
+	message string,
+) (
+	events.LambdaFunctionURLResponse,
+	error,
+) {
 	return encode(status, &Response{
 		Success: nil,
 		Failure: &ResponseFailure{Message: message},
@@ -50,8 +61,14 @@ func EncodeFailure(status int, message string) (string, error) {
 
 // -- i/helpers
 
-// encode the result as a string response
-func encode(status int, result *Response) (string, error) {
+// encode the result as a lambda url response
+func encode(
+	status int,
+	result *Response,
+) (
+	events.LambdaFunctionURLResponse,
+	error,
+) {
 	// encode body from result
 	raw, err := json.Marshal(result)
 
@@ -70,19 +87,18 @@ func encode(status int, result *Response) (string, error) {
 
 }
 
-// encode the string response
-func encodeWithBody(status int, body string) (string, error) {
-	// build response wrapper
-	res := &events.APIGatewayProxyResponse{
+// encode the lambda url response
+func encodeWithBody(
+	status int,
+	body string,
+) (
+	events.LambdaFunctionURLResponse,
+	error,
+) {
+	res := events.LambdaFunctionURLResponse{
 		StatusCode: status,
 		Body:       body,
 	}
 
-	// marshal it; if we fail to marshal the wrapper, who knows
-	raw, err := json.Marshal(res)
-	if err != nil {
-		log.Println("[Result.encodeWithBody] couldn't marshal `events.APIGatewayProxyRepsonse`")
-	}
-
-	return string(raw), err
+	return res, nil
 }

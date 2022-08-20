@@ -11,11 +11,11 @@ import (
 func TestToBody_U(t *testing.T) {
 	share := NewSharedFile(
 		&Source{
-			Url: test.Str("https://httpbin.org/get"),
+			Url: test.Str("https://test.com"),
 		},
 	)
 
 	html := share.ToBody("test")
-	assert.Contains(t, html, `<meta name="mise-share-url" content="https://httpbin.org/get">`)
+	assert.Contains(t, html, `<meta name="mise-share-url" content="https://test.com">`)
 	assert.Contains(t, html, `<meta property="og:url" content="https://share.miseapp.co/test">`)
 }

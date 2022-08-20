@@ -43,7 +43,10 @@ func (s *SharedFile) ToBody(key string) string {
 	return fmt.Sprintf(reg.ReplaceAllLiteralString(`
 		<html>
 			<head>
+				<!-- data -->
 				<meta name="mise-share-url" content="%s">
+
+				<!-- preview -->
 				<meta property="og:title" content="Check out this recipe!">
 				<meta property="og:type" content="website">
 				<meta property="og:image" content="https://images.squarespace-cdn.com/content/v1/5ffb69ddfe0aa2509285f006/1614557697674-RZGESXDJJ4CMQLTIFOZI/Stirring.png">
