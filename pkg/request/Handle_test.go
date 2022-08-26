@@ -1,4 +1,4 @@
-package main
+package request
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func initRequest(body RequestBody) (*events.LambdaFunctionURLRequest, error) {
 }
 
 // -- tests --
-func TestHandleRequest_I(t *testing.T) {
+func TestHandle_I(t *testing.T) {
 	req, err := initRequest(RequestBody{
 		Source: &RequestSource{
 			Url: test.Str("https://test.com"),
@@ -34,17 +34,17 @@ func TestHandleRequest_I(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	res, err := handleRequest(context.TODO(), *req)
+	res, err := Handle(context.TODO(), *req)
 	assert.Nil(t, err)
 	assert.Contains(t, res.Body, `<meta name="mise-share-url" content="https://test.com">`)
 	assert.Contains(t, res.Body, `<meta property="og:url" content="https://share.miseapp.co/test">`)
 }
 
-func TestHandleRequest_BadRequest_U(t *testing.T) {
+func TestHandle_BadRequest_U(t *testing.T) {
 	req1, err := initRequest(RequestBody{})
 	assert.Nil(t, err)
 
-	res1, err := handleRequest(context.TODO(), *req1)
+	res1, err := Handle(context.TODO(), *req1)
 	assert.Nil(t, err)
 	assert.Equal(t, res1.StatusCode, http.StatusBadRequest)
 	assert.Contains(t, res1.Body, "required field: 'source'")
@@ -52,7 +52,7 @@ func TestHandleRequest_BadRequest_U(t *testing.T) {
 	req2, err := initRequest(RequestBody{Source: &RequestSource{Url: nil}})
 	assert.Nil(t, err)
 
-	res2, err := handleRequest(context.TODO(), *req2)
+	res2, err := Handle(context.TODO(), *req2)
 	assert.Nil(t, err)
 	assert.Equal(t, res2.StatusCode, http.StatusBadRequest)
 	assert.Contains(t, res2.Body, "required field: 'source.url'")

@@ -1,4 +1,4 @@
-package main
+package request
 
 import (
 	"encoding/json"
@@ -26,6 +26,9 @@ type ResponseSuccess struct {
 
 // the api response failure structure
 type ResponseFailure struct {
+	// the http status code
+	Status int `json:"status"`
+
 	// the user-facing error message
 	Message string `json:"message"`
 }
@@ -55,7 +58,10 @@ func EncodeFailure(
 ) {
 	return encode(status, &Response{
 		Success: nil,
-		Failure: &ResponseFailure{Message: message},
+		Failure: &ResponseFailure{
+			Status:  status,
+			Message: message,
+		},
 	})
 }
 
@@ -81,7 +87,7 @@ func encode(
 	} else {
 		return encodeWithBody(
 			http.StatusInternalServerError,
-			`{ "failure": { "message": "failed to encode result" } }`,
+			`{"failure":{"status":500,"message":"failed to encode result"}}`,
 		)
 	}
 

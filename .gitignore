@@ -7,6 +7,9 @@ tmp
 # run
 test.json
 
+# localstack/docker
+volume
+
 # terraform
 .terraform
 terraform.tfplan
