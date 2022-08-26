@@ -23,18 +23,21 @@ dr-endpoint = $(AWS_ENDPOINT)
 # -- tools --
 ti-brew = brew
 tf-dc = docker-compose
-tf-dev = $(tf-dev-env) terraform -chdir="$(df-infra)"
-tf-dev-env = env $$(grep -v "^\#" .env-dev | xargs)
-tf-prod = $(tf-prod-env) terraform -chdir="$(df-infra)"
-tf-prod-env = env $$(grep -v "^\#" .env-prod | xargs)
+tf-d = $(ts-d-env) terraform -chdir="$(df-infra)"
+tf-p = $(ts-p-env) terraform -chdir="$(df-infra)"
 tf-plist = plutil
-tb-go = go
-tt-go = go
+td-go = GOOS=linux GOARCH=amd64 go
+tb-d-go = SHARE_ENV=.env-dev $(td-go)
+tb-p-go = SHARE_ENV=.env-prod $(td-go)
+tt-d-go = SHARE_ENV=.env-dev go
+tt-p-go = SHARE_ENV=.env-prod go
 tr-http = http
 ts-aws = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds aws
+ts-d-env = env $$(grep -v "^\#" .env-dev | xargs)
+ts-p-env = env $$(grep -v "^\#" .env-prod | xargs)
 
 # -- state --
-sf-url = $(tf-dev) output -raw share_add_url
+sf-url = $(tf-d) output -raw share_add_url
 
 ## -- init (i) --
 $(eval $(call alias, init, i/0))
@@ -63,15 +66,25 @@ endif
 $(eval $(call alias, build, b/0))
 $(eval $(call alias, b, b/0))
 
-## build handler fn
+## build fn
 b/0:
-	GOOS=linux GOARCH=amd64 $(tb-go) build -o $(db-binary) $(db-entry)
+	$(tb-d-go) build -o $(db-binary) $(db-entry)
 .PHONY: b/0
 
 ## build & archive
 b/arch: b
 	zip $(db-archive) $(db-binary)
 .PHONY: b/arch
+
+## build prod
+b/p:
+	$(tb-p-go) build -o $(db-binary) $(db-entry)
+.PHONY: b/prod
+
+## build & archive prod
+b/arch/p: b/p
+	$(tb-p-go) build -o $(db-binary) $(db-entry)
+.PHONY: b/p/arch
 
 ## clean build dir
 b/clean:
@@ -102,12 +115,12 @@ $(eval $(call alias, t, t/0))
 
 ## run tests
 t/0:
-	$(tt-go) test ./... -run "_U"
+	$(tt-d-go) test ./... -run "_U"
 .PHONY: t/0
 
 ## run unit & int tests
 t/all:
-	$(tt-go) test ./...
+	$(tt-d-go) test ./...
 .PHONY: t/all
 
 ## -- infra (f) --
@@ -152,17 +165,17 @@ f/update: f/plan f/apply f/u/sync
 
 ## create migration plan
 f/plan: $(df-tf)
-	$(tf-dev) plan -out=$(df-plan)
+	$(tf-d) plan -out=$(df-plan)
 .PHONY: f
 
 ## apply migration plan
 f/apply:
-	$(tf-dev) apply -auto-approve $(df-plan)
+	$(tf-d) apply -auto-approve $(df-plan)
 .PHONY: f/apply
 
 ## validate configuration
 f/valid:
-	$(tf-dev) validate
+	$(tf-d) validate
 .PHONY: f/validate
 
 ## seed initial state
@@ -177,7 +190,7 @@ f/seed:
 
 ## destroy infra
 f/clean:
-	$(tf-dev) destroy
+	$(tf-d) destroy
 .PHONY: f/reset
 
 ## show the dev share url
@@ -195,4 +208,4 @@ f/u/sync:
 
 # -- i/helpers
 $(df-tf):
-	$(tf-dev) init
+	$(tf-d) init

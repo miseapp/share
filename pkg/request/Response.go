@@ -11,6 +11,9 @@ import (
 
 // the share response envelope
 type Response struct {
+	// the http status code
+	Status int `json:"status"`
+
 	// the success structure, if any
 	Success *ResponseSuccess `json:"success,omitempty"`
 
@@ -26,9 +29,6 @@ type ResponseSuccess struct {
 
 // the api response failure structure
 type ResponseFailure struct {
-	// the http status code
-	Status int `json:"status"`
-
 	// the user-facing error message
 	Message string `json:"message"`
 }
@@ -43,6 +43,7 @@ func EncodeSuccess(
 	error,
 ) {
 	return encode(status, &Response{
+		Status:  status,
 		Success: &ResponseSuccess{Url: url},
 		Failure: nil,
 	})
@@ -57,11 +58,9 @@ func EncodeFailure(
 	error,
 ) {
 	return encode(status, &Response{
+		Status:  status,
 		Success: nil,
-		Failure: &ResponseFailure{
-			Status:  status,
-			Message: message,
-		},
+		Failure: &ResponseFailure{Message: message},
 	})
 }
 
@@ -87,7 +86,7 @@ func encode(
 	} else {
 		return encodeWithBody(
 			http.StatusInternalServerError,
-			`{"failure":{"status":500,"message":"failed to encode result"}}`,
+			`{"status":500,"failure":{"message":"failed to encode result"}}`,
 		)
 	}
 

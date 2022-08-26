@@ -5,11 +5,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"os"
+	"mise-share/pkg/config"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -20,27 +19,32 @@ import (
 
 // a repo for a collection of remote files
 type Files struct {
+	// the s3 client
 	S3 *s3.Client
+
+	// the dynamodb client
 	Db *dynamodb.Client
+
+	// the files config
+	cfg *config.Config
 }
 
 // -- impls --
 func New() (*Files, error) {
-	// init aws config
-	cfg, err := config.LoadDefaultConfig(
-		context.TODO(),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(ResolveEndpoint)),
-		config.WithClientLogMode(aws.LogRequestWithBody|aws.LogResponseWithBody),
-	)
+	// init our config
+	cfg := config.New()
 
+	// init aws config
+	aws, err := cfg.InitAws()
 	if err != nil {
 		return nil, err
 	}
 
 	// init repo
 	files := &Files{
-		S3: s3.NewFromConfig(cfg),
-		Db: dynamodb.NewFromConfig(cfg),
+		S3:  s3.NewFromConfig(aws),
+		Db:  dynamodb.NewFromConfig(aws),
+		cfg: cfg,
 	}
 
 	return files, nil
@@ -55,9 +59,9 @@ func (f *Files) Create(content FileContent) (string, error) {
 	res, err := f.Db.UpdateItem(
 		context.TODO(),
 		&dynamodb.UpdateItemInput{
-			TableName: aws.String("share.count"),
+			TableName: aws.String(f.cfg.CountName),
 			Key: map[string]types.AttributeValue{
-				"Id": &types.AttributeValueMemberS{Value: "share-files"},
+				"Id": &types.AttributeValueMemberS{Value: f.cfg.FilesName},
 			},
 			ExpressionAttributeNames: map[string]string{
 				"#C": "Count",
@@ -113,7 +117,7 @@ func (f *Files) Create(content FileContent) (string, error) {
 			ContentLength:   int64(file.Length),
 			ContentLanguage: aws.String("en-US"),
 			ContentMD5:      aws.String(base64.StdEncoding.EncodeToString(file.Hash[:])),
-			Bucket:          aws.String("share-files"),
+			Bucket:          aws.String(f.cfg.FilesName),
 		},
 	)
 
@@ -122,20 +126,4 @@ func (f *Files) Create(content FileContent) (string, error) {
 	}
 
 	return file.Key, nil
-}
-
-// -- i/Endpoint
-func ResolveEndpoint(service, region string, options ...interface{}) (aws.Endpoint, error) {
-	// if there is an endpoint set in env
-	url := os.Getenv("AWS_ENDPOINT")
-	if url == "" {
-		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
-	}
-
-	// use it instead of the default
-	endpoint := aws.Endpoint{
-		URL: url,
-	}
-
-	return endpoint, nil
 }
