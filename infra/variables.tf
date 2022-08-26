@@ -27,8 +27,3 @@ variable "share_add_binary" {
 variable "share_add_archive" {
   type = string
 }
-
-variable "share_add_iam" {
-  type    = string
-  default = "share.add-role"
-}

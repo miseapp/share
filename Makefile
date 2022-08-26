@@ -1,4 +1,4 @@
-include .env
+include .env-dev
 include ./Makefile.base.mk
 
 # -- cosmetics --
@@ -23,13 +23,15 @@ dr-endpoint = $(AWS_ENDPOINT)
 # -- tools --
 ti-brew = brew
 tf-dc = docker-compose
-tf-prod = . .env && terraform -chdir="$(df-infra)"
-tf-dev = . .env && TF_VAR_local=true terraform -chdir="$(df-infra)"
+tf-dev = $(tf-dev-env) terraform -chdir="$(df-infra)"
+tf-dev-env = env $$(grep -v "^\#" .env-dev | xargs)
+tf-prod = $(tf-prod-env) terraform -chdir="$(df-infra)"
+tf-prod-env = env $$(grep -v "^\#" .env-prod | xargs)
 tf-plist = plutil
 tb-go = go
 tt-go = go
-tr-env = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds
 tr-http = http
+ts-aws = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds aws
 
 # -- state --
 sf-url = $(tf-dev) output -raw share_add_url
@@ -85,21 +87,10 @@ r/0:
 	$(tr-http) POST $$($(sf-url)) < test.json
 .PHONY: r/0
 
-# r/0:
-# 	$(tr-env) \
-# 	$(tr-aws) lambda invoke \
-# 	--function-name $(dr-fn) \
-# 	--payload $$(base64 < $(dr-payload)) \
-# 	--endpoint-url=$(dr-endpoint) \
-# 	--log-type Tail \
-# 	--debug \
-# 	test.json
-# .PHONY: r/0
-
 ## read logs
 r/logs:
-	$(tr-env) \
-	$(tr-aws) logs get-log-events \
+	$(ts-aws) \
+	logs get-log-events \
 	--log-group-name /aws/lambda/$(dr-fn) \
 	--log-stream-name $$(/bin/cat out) \
 	--limit 5
@@ -176,11 +167,8 @@ f/valid:
 
 ## seed initial state
 f/seed:
-	$(tr-env) \
-	AWS_ACCESS_KEY_ID=test \
-	AWS_SECRET_ACCESS_KEY=test \
 	AWS_PAGER="" \
-	$(tr-aws) dynamodb put-item \
+	$(ts-aws) dynamodb put-item \
 	--table-name $(df-table) \
 	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }' \
 	--endpoint-url=$(dr-endpoint) \
@@ -199,10 +187,10 @@ f/url:
 
 ## sync the dev share url
 f/u/sync:
-	# $(tf-plist) \
-	# -replace "Share-URL" \
-	# -string $$($(sf-url)) \
-	# $(df-app-cfg-dev)
+	$(tf-plist) \
+	-replace "Share-URL" \
+	-string $$($(sf-url)) \
+	$(df-app-cfg-dev)
 .PHONY: f/u/sync
 
 # -- i/helpers
