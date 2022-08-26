@@ -23,18 +23,16 @@ dr-endpoint = $(AWS_ENDPOINT)
 # -- tools --
 ti-brew = brew
 tf-dc = docker-compose
-tf-terraform = . .env && terraform -chdir="$(df-infra)"
+tf-prod = . .env && terraform -chdir="$(df-infra)"
+tf-dev = . .env && TF_VAR_local=true terraform -chdir="$(df-infra)"
 tf-plist = plutil
 tb-go = go
 tt-go = go
-tr-aws = aws
 tr-env = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds
+tr-http = http
 
 # -- state --
-sf-url = \
-	$(tf-terraform) output share_add_url \
-	| tr -d '"' \
-	| sed 's/us-east-1.amazonaws.com/localhost.localstack.cloud:4566/'
+sf-url = $(tf-dev) output -raw share_add_url
 
 ## -- init (i) --
 $(eval $(call alias, init, i/0))
@@ -84,8 +82,7 @@ $(eval $(call alias, r, r/0))
 
 ## call local handler fn
 r/0:
-	curl \
-	$$($(sf-url))
+	$(tr-http) POST $$($(sf-url)) < test.json
 .PHONY: r/0
 
 # r/0:
@@ -164,17 +161,17 @@ f/update: f/plan f/apply f/u/sync
 
 ## create migration plan
 f/plan: $(df-tf)
-	$(tf-terraform) plan -out=$(df-plan)
+	$(tf-dev) plan -out=$(df-plan)
 .PHONY: f
 
 ## apply migration plan
 f/apply:
-	$(tf-terraform) apply -auto-approve $(df-plan)
+	$(tf-dev) apply -auto-approve $(df-plan)
 .PHONY: f/apply
 
 ## validate configuration
 f/valid:
-	$(tf-terraform) validate
+	$(tf-dev) validate
 .PHONY: f/validate
 
 ## seed initial state
@@ -192,7 +189,7 @@ f/seed:
 
 ## destroy infra
 f/clean:
-	$(tf-terraform) destroy
+	$(tf-dev) destroy
 .PHONY: f/reset
 
 ## show the dev share url
@@ -210,4 +207,4 @@ f/u/sync:
 
 # -- i/helpers
 $(df-tf):
-	$(tf-terraform) init
+	$(tf-dev) init

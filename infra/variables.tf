@@ -1,3 +1,8 @@
+// localstack
+variable "local" {
+  type = bool
+}
+
 // any variables with no default are sourced from .env
 variable "share_region" {
   type = string

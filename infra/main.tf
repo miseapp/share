@@ -12,21 +12,20 @@ terraform {
 // localstack
 provider "aws" {
   region                      = var.share_region
-  s3_use_path_style           = true
-  access_key                  = "test"
-  secret_key                  = "test"
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
+
+  access_key                  = var.local ? "test" : null
+  secret_key                  = var.local ? "test" : null
+  s3_use_path_style           = var.local
+  skip_credentials_validation = var.local
+  skip_metadata_api_check     = var.local
+  skip_requesting_account_id  = var.local
 
   // configure all services to use localstack url
   endpoints {
-    apigateway   = "http://localhost:4566"
-    apigatewayv2 = "http://localhost:4566"
-    dynamodb     = "http://localhost:4566"
-    iam          = "http://localhost:4566"
-    lambda       = "http://localhost:4566"
-    s3           = "http://localhost:4566"
+    dynamodb     = var.local ? "http://localhost:4566" : null
+    iam          = var.local ? "http://localhost:4566" : null
+    lambda       = var.local ? "http://localhost:4566" : null
+    s3           = var.local ? "http://s3.localhost.localstack.cloud:4566" : null
   }
 }
 
