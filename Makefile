@@ -4,37 +4,49 @@ include ./Makefile.base.mk
 # -- cosmetics --
 help-colw = 8
 
-# -- constants --
+# -- data --
+ds-endpoint = $(AWS_ENDPOINT)
+ds-denv = .env-dev
+ds-penv = .env-prod
+
 df-infra = infra
 df-tf = $(df-infra)/.terraform
 df-plan = terraform.tfplan
 df-table = $(SHARE_COUNT_NAME)
 df-item-id = $(SHARE_FILES_NAME)
 df-app = ../app
-df-app-cfg-dev = $(df-app)/Mise/InfoDev.plist
+df-app-dcfg = $(df-app)/Mise/InfoDev.plist
+
 db-entry = cmd/main.go
 db-build = build
 db-binary = $(SHARE_ADD_BINARY)
 db-archive = $(SHARE_ADD_ARCHIVE)
+
 dr-fn = $(SHARE_ADD_NAME)
-dr-payload = payload.json
-dr-endpoint = $(AWS_ENDPOINT)
+dr-input = input.json
 
 # -- tools --
+ts-denv = env $$(grep -v "^\#" $(ds-denv) | xargs)
+ts-penv = env $$(grep -v "^\#" $(ds-penv) | xargs)
+ts-aws-d = $(ts-denv) aws --endpoint $(ds-endpoint)
+ts-aws-p = $(ts-penv) aws
+
 ti-brew = brew
-tf-dc = docker-compose
-tf-d = $(ts-d-env) terraform -chdir="$(df-infra)"
-tf-p = $(ts-p-env) terraform -chdir="$(df-infra)"
+
+tf-dc = docker-compose --env-file=$(ds-denv)
+tf-d = $(ts-denv) terraform -chdir="$(df-infra)"
+tf-p = $(ts-penv) terraform -chdir="$(df-infra)"
 tf-plist = plutil
+
 td-go = GOOS=linux GOARCH=amd64 go
-tb-d-go = SHARE_ENV=.env-dev $(td-go)
-tb-p-go = SHARE_ENV=.env-prod $(td-go)
-tt-d-go = SHARE_ENV=.env-dev go
-tt-p-go = SHARE_ENV=.env-prod go
+tb-d-go = $(ts-denv) $(td-go)
+tb-p-go = $(ts-penv) $(td-go)
+
+tt-go = go
+tt-d-go = $(ts-denv) $(tt-go)
+tt-p-go = $(ts-penv) $(tt-go)
+
 tr-http = http
-ts-aws = AWS_CONFIG_FILE=.aws/config AWS_SHARED_CREDENTIALS_FILE=.aws/creds aws
-ts-d-env = env $$(grep -v "^\#" .env-dev | xargs)
-ts-p-env = env $$(grep -v "^\#" .env-prod | xargs)
 
 # -- state --
 sf-url = $(tf-d) output -raw share_add_url
@@ -97,16 +109,14 @@ $(eval $(call alias, r, r/0))
 
 ## call local handler fn
 r/0:
-	$(tr-http) POST $$($(sf-url)) < test.json
+	$(tr-http) POST $$($(sf-url)) < $(dr-input)
 .PHONY: r/0
 
 ## read logs
 r/logs:
-	$(ts-aws) \
-	logs get-log-events \
-	--log-group-name /aws/lambda/$(dr-fn) \
-	--log-stream-name $$(/bin/cat out) \
-	--limit 5
+	$(ts-aws-d) \
+	logs tail \
+	/aws/lambda/$(dr-fn)
 .PHONY: r/logs
 
 ## -- test (t) --
@@ -181,10 +191,9 @@ f/valid:
 ## seed initial state
 f/seed:
 	AWS_PAGER="" \
-	$(ts-aws) dynamodb put-item \
+	$(ts-aws-d) dynamodb put-item \
 	--table-name $(df-table) \
 	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }' \
-	--endpoint-url=$(dr-endpoint) \
 	--debug
 .PHOYN: f/seed
 
@@ -203,7 +212,7 @@ f/u/sync:
 	$(tf-plist) \
 	-replace "Share-URL" \
 	-string $$($(sf-url)) \
-	$(df-app-cfg-dev)
+	$(df-app-dcfg)
 .PHONY: f/u/sync
 
 # -- i/helpers

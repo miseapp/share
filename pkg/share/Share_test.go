@@ -4,7 +4,6 @@ import (
 	"context"
 	"mise-share/pkg/share/files"
 	"mise-share/pkg/share/test"
-	"os"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -13,14 +12,6 @@ import (
 )
 
 // -- tests --
-func TestMain(m *testing.M) {
-	os.Setenv("AWS_ENDPOINT", "http://localhost:4566")
-	os.Setenv("AWS_REGION", "us-east-1")
-	os.Setenv("AWS_ACCESS_KEY_ID", "test")
-	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
-	os.Exit(m.Run())
-}
-
 func TestShare_I(t *testing.T) {
 	files, err := files.New()
 	assert.Equal(t, nil, err)

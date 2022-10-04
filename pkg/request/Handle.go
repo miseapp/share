@@ -1,7 +1,6 @@
 package request
 
 import (
-	"log"
 	"mise-share/pkg/share"
 	"net/http"
 
@@ -27,8 +26,6 @@ func Handle(
 		)
 	}
 
-	log.Println("the request body", body)
-
 	// validate the request
 	if body.Source == nil {
 		return EncodeFailure(
@@ -51,6 +48,7 @@ func Handle(
 		},
 	)
 
+	// if error, return failure
 	if err != nil {
 		return EncodeFailure(
 			http.StatusInternalServerError,
@@ -61,16 +59,17 @@ func Handle(
 	// run command
 	url, err := cmd.Call()
 
-	// return result structure
-	if err == nil {
-		return EncodeSuccess(
-			http.StatusOK,
-			url,
-		)
-	} else {
+	// if error, return failure
+	if err != nil {
 		return EncodeFailure(
 			http.StatusInternalServerError,
 			err.Error(),
 		)
 	}
+
+	// otherwise, return success w/ the share url
+	return EncodeSuccess(
+		http.StatusOK,
+		url,
+	)
 }

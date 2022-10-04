@@ -3,6 +3,10 @@ variable "local" {
   type = bool
 }
 
+variable "aws_endpoint" {
+  type = string
+}
+
 // any variables with no default are sourced from .env
 variable "share_region" {
   type = string

@@ -22,9 +22,9 @@ provider "aws" {
 
   // configure all services to use localstack url
   endpoints {
-    dynamodb     = var.local ? "http://localhost:4566" : null
-    iam          = var.local ? "http://localhost:4566" : null
-    lambda       = var.local ? "http://localhost:4566" : null
+    dynamodb     = var.local ? var.aws_endpoint : null
+    iam          = var.local ? var.aws_endpoint : null
+    lambda       = var.local ? var.aws_endpoint : null
     s3           = var.local ? "http://s3.localhost.localstack.cloud:4566" : null
   }
 }
@@ -92,6 +92,14 @@ resource "aws_lambda_function" "share_add" {
   filename         = var.share_add_archive
   source_code_hash = filebase64sha256(var.share_add_archive)
   role             = aws_iam_role.share_add.arn
+
+  environment {
+    variables = {
+      LOCAL = var.local ? "1" : null
+      SHARE_FILES_NAME = var.share_files_name
+      SHARE_COUNT_NAME = var.share_count_name
+    }
+  }
 }
 
 resource "aws_lambda_function_url" "share_add" {
@@ -106,10 +114,6 @@ resource "aws_lambda_function_url" "share_add" {
     expose_headers    = ["keep-alive", "date"]
     max_age           = 86400
   }
-}
-
-output "share_add_url" {
-  value = "${aws_lambda_function_url.share_add.function_url}"
 }
 
 resource "aws_iam_role" "share_add" {
@@ -130,4 +134,8 @@ resource "aws_iam_role" "share_add" {
   ]
 }
 EOF
+}
+
+output "share_add_url" {
+  value = "${aws_lambda_function_url.share_add.function_url}"
 }

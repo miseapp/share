@@ -2,12 +2,12 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/joho/godotenv"
 )
 
 // -- types --
@@ -16,6 +16,9 @@ import (
 type Config struct {
 	// the aws endpoint
 	Endpoint string
+
+	// the aws region
+	Region string
 
 	// the count table name
 	CountName string
@@ -28,18 +31,25 @@ type Config struct {
 
 // create a new config
 func New() *Config {
-	// load dotenv if specified
-	env := os.Getenv("SHARE_ENV")
-	if env != "" {
-		err := godotenv.Load("../../" + env)
-		if err != nil {
-			log.Fatal("[config] could not load .env @ ", env)
-		}
+	endpoint := ""
+
+	// if localstack endpoint exists, use that
+	host := os.Getenv("LOCALSTACK_HOSTNAME")
+	port := os.Getenv("EDGE_PORT")
+	if host != "" && port != "" {
+		endpoint = fmt.Sprintf("http://%s:%s", host, port)
 	}
 
+	// if not resolved and aws endpoint exists, use that
+	if endpoint == "" {
+		endpoint = os.Getenv("AWS_ENDPOINT")
+	}
+
+	// build config
 	// TODO: may neeed a separate url for files https://localhost.localstack.cloud:4566
 	return &Config{
-		Endpoint:  os.Getenv("AWS_ENDPOINT"),
+		Endpoint:  endpoint,
+		Region:    os.Getenv("SHARE_REGION"),
 		CountName: os.Getenv("SHARE_COUNT_NAME"),
 		FilesName: os.Getenv("SHARE_FILES_NAME"),
 	}
@@ -49,6 +59,7 @@ func New() *Config {
 func (c *Config) InitAws() (aws.Config, error) {
 	return config.LoadDefaultConfig(
 		context.TODO(),
+		config.WithRegion(c.Region),
 		config.WithEndpointResolverWithOptions(
 			aws.EndpointResolverWithOptionsFunc(c.ResolveEndpoint),
 		),
@@ -69,8 +80,10 @@ func (c *Config) ResolveEndpoint(
 	aws.Endpoint,
 	error,
 ) {
-	// if there is an endpoint set in env
 	url := c.Endpoint
+	log.Println(fmt.Sprintf("[Config.ResolveEndpoint] url: %s service: %s region", service, region))
+
+	// if there is no endpoint, error
 	if url == "" {
 		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
 	}
@@ -79,8 +92,6 @@ func (c *Config) ResolveEndpoint(
 	endpoint := aws.Endpoint{
 		URL: url,
 	}
-
-	log.Println("using endpoint", endpoint.URL)
 
 	return endpoint, nil
 }
