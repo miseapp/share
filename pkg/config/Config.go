@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -49,7 +48,7 @@ func New() *Config {
 	// TODO: may neeed a separate url for files https://localhost.localstack.cloud:4566
 	return &Config{
 		Endpoint:  endpoint,
-		Region:    os.Getenv("SHARE_REGION"),
+		Region:    os.Getenv("AWS_REGION"),
 		CountName: os.Getenv("SHARE_COUNT_NAME"),
 		FilesName: os.Getenv("SHARE_FILES_NAME"),
 	}
@@ -81,7 +80,6 @@ func (c *Config) ResolveEndpoint(
 	error,
 ) {
 	url := c.Endpoint
-	log.Println(fmt.Sprintf("[Config.ResolveEndpoint] url: %s service: %s region", service, region))
 
 	// if there is no endpoint, error
 	if url == "" {
@@ -90,7 +88,8 @@ func (c *Config) ResolveEndpoint(
 
 	// use it instead of the default
 	endpoint := aws.Endpoint{
-		URL: url,
+		URL:           url,
+		SigningRegion: region,
 	}
 
 	return endpoint, nil

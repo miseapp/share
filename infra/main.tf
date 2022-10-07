@@ -11,7 +11,7 @@ terraform {
 
 // localstack
 provider "aws" {
-  region                      = var.share_region
+  region                      = var.aws_region
 
   access_key                  = var.local ? "test" : null
   secret_key                  = var.local ? "test" : null

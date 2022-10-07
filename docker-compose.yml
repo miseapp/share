@@ -14,6 +14,7 @@ services:
       - DEBUG=${DEBUG-}
       - PERSISTENCE=${PERSISTENCE-}
       - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
+      - LS_LOG=${LS_LOG-}
       - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY-}  # only required for pro
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:

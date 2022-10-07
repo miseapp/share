@@ -1,4 +1,4 @@
-// localstack
+// any variables with no default are sourced from .env
 variable "local" {
   type = bool
 }
@@ -7,8 +7,7 @@ variable "aws_endpoint" {
   type = string
 }
 
-// any variables with no default are sourced from .env
-variable "share_region" {
+variable "aws_region" {
   type = string
 }
 

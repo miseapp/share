@@ -145,10 +145,19 @@ f/0: f/dev
 f/dev: f/up f/setup f/tail
 .PHONY: f/dev
 
+## prepare & run dev stack w/ debug output
+f/dbg: f/upv f/setup f/tail
+.PHOYN: f/dbg
+
 ## run localstack
 f/up:
 	$(tf-dc) up -d
 .PHONY: f/up
+
+## run localstack w/ debug output
+f/upv:
+	LS_LOG=trace $(tf-dc) up -d
+.PHONY: f/upv
 
 ## run localstack in foreground
 f/upf:
@@ -190,12 +199,17 @@ f/valid:
 
 ## seed initial state
 f/seed:
-	AWS_PAGER="" \
-	$(ts-aws-d) dynamodb put-item \
+	$(ts-aws-d) \
+	dynamodb put-item \
 	--table-name $(df-table) \
-	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }' \
-	--debug
-.PHOYN: f/seed
+	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }'
+.PHONY: f/seed
+
+## list tables
+f/tables:
+	$(ts-aws-d) \
+	dynamodb list-tables
+.PHONY: f/tables
 
 ## destroy infra
 f/clean:
