@@ -56,7 +56,7 @@ func New() (*Files, error) {
 func (f *Files) Create(content FileContent) (string, error) {
 	// atomically increment the counter
 	// see: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.AtomicCounters
-	res, err := f.Db.UpdateItem(
+	resCount, err := f.Db.UpdateItem(
 		context.TODO(),
 		&dynamodb.UpdateItemInput{
 			TableName: aws.String(f.cfg.CountName),
@@ -80,7 +80,7 @@ func (f *Files) Create(content FileContent) (string, error) {
 	}
 
 	// this shouldn't happen, UpdateItem inserts when the key is missing
-	if res == nil {
+	if resCount == nil {
 		return "", &MissingCountError{}
 	}
 
@@ -89,7 +89,7 @@ func (f *Files) Create(content FileContent) (string, error) {
 		Count string `json:"Count"`
 	}
 
-	err = attributevalue.UnmarshalMap(res.Attributes, &rec)
+	err = attributevalue.UnmarshalMap(resCount.Attributes, &rec)
 	if err != nil {
 		log.Println("[Files.Create] could not unmarshal response", err)
 		return "", err
@@ -111,7 +111,7 @@ func (f *Files) Create(content FileContent) (string, error) {
 	_, err = f.S3.PutObject(
 		context.TODO(),
 		&s3.PutObjectInput{
-			Key:             aws.String(fmt.Sprintf("%s.html", file.Key)),
+			Key:             aws.String(file.Key),
 			Body:            file.Body,
 			ContentType:     aws.String("text/html"),
 			ContentLength:   int64(file.Length),
@@ -125,5 +125,14 @@ func (f *Files) Create(content FileContent) (string, error) {
 		return "", err
 	}
 
-	return file.Key, nil
+	// format the url
+	url := fmt.Sprintf(
+		"%s://%s.%s/%s",
+		f.cfg.Scheme,
+		f.cfg.FilesName,
+		f.cfg.HostForService(s3.ServiceID),
+		file.Key,
+	)
+
+	return url, nil
 }

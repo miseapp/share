@@ -8,14 +8,15 @@ import (
 )
 
 // -- tests --
-func TestToBody_U(t *testing.T) {
+func TestRender_U(t *testing.T) {
 	share := NewSharedFile(
 		&Source{
 			Url: test.Str("https://test.com"),
 		},
 	)
 
-	html := share.ToBody("test")
+	key, html := share.Render("test")
+	assert.Equal(t, key, "test.html")
 	assert.Contains(t, html, `<meta name="mise-share-url" content="https://test.com">`)
 	assert.Contains(t, html, `<meta property="og:url" content="https://share.miseapp.co/test">`)
 }

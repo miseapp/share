@@ -34,24 +34,32 @@ func NewSharedFile(source *Source) *SharedFile {
 }
 
 // returns the html representation of the shared file
-func (s *SharedFile) ToBody(key string) string {
+func (s *SharedFile) Render(id string) (string, string) {
 	reg, err := regexp.Compile("[\t\n]+")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return fmt.Sprintf(reg.ReplaceAllLiteralString(`
-		<html>
-			<head>
-				<!-- data -->
-				<meta name="mise-share-url" content="%s">
+	body := fmt.Sprintf(
+		reg.ReplaceAllLiteralString(`
+			<html>
+				<head>
+					<!-- data -->
+					<meta name="mise-share-url" content="%s">
 
-				<!-- preview -->
-				<meta property="og:title" content="Check out this recipe!">
-				<meta property="og:type" content="website">
-				<meta property="og:image" content="https://images.squarespace-cdn.com/content/v1/5ffb69ddfe0aa2509285f006/1614557697674-RZGESXDJJ4CMQLTIFOZI/Stirring.png">
-				<meta property="og:url" content="https://share.miseapp.co/%s">
-			</head>
-		</html>
-	`, ""), *s.source.Url, key)
+					<!-- preview -->
+					<meta property="og:title" content="Check out this recipe!">
+					<meta property="og:type" content="website">
+					<meta property="og:image" content="https://images.squarespace-cdn.com/content/v1/5ffb69ddfe0aa2509285f006/1614557697674-RZGESXDJJ4CMQLTIFOZI/Stirring.png">
+					<meta property="og:url" content="https://share.miseapp.co/%s">
+				</head>
+			</html>
+		`, ""),
+		*s.source.Url,
+		id,
+	)
+
+	key := fmt.Sprintf("%s.html", id)
+
+	return key, body
 }

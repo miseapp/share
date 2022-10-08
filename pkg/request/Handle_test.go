@@ -36,8 +36,7 @@ func TestHandle_I(t *testing.T) {
 
 	res, err := Handle(context.TODO(), *req)
 	assert.Nil(t, err)
-	assert.Contains(t, res.Body, `<meta name="mise-share-url" content="https://test.com">`)
-	assert.Contains(t, res.Body, `<meta property="og:url" content="https://share.miseapp.co/test">`)
+	assert.Contains(t, res.Body, `http://share-files.s3.localhost.localstack.cloud:4566`)
 }
 
 func TestHandle_BadRequest_U(t *testing.T) {

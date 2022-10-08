@@ -22,9 +22,9 @@ provider "aws" {
 
   // configure all services to use localstack url
   endpoints {
-    dynamodb     = var.local ? var.aws_endpoint : null
-    iam          = var.local ? var.aws_endpoint : null
-    lambda       = var.local ? var.aws_endpoint : null
+    dynamodb     = var.local ? "http://localhost:4566" : null
+    iam          = var.local ? "http://localhost:4566" : null
+    lambda       = var.local ? "http://localhost:4566" : null
     s3           = var.local ? "http://s3.localhost.localstack.cloud:4566" : null
   }
 }

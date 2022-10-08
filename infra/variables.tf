@@ -3,10 +3,6 @@ variable "local" {
   type = bool
 }
 
-variable "aws_endpoint" {
-  type = string
-}
-
 variable "aws_region" {
   type = string
 }

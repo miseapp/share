@@ -16,28 +16,30 @@ type File struct {
 	Hash   [16]byte
 }
 
+// the content of a file
 type FileContent interface {
-	ToBody(key string) string
+	// render the contents & id to a key and body
+	Render(id string) (string, string)
 }
 
 // -- impls --
 
-// builds a file from an index and its content
+// builds a file from an id and its content
 func NewFile(i int, content FileContent) (*File, error) {
-	key := Key(i)
+	k := Key(i)
 
-	// try and encode the file key
-	skey, err := key.Encode()
+	// encode the file key to an id
+	id, err := k.Encode()
 	if err != nil {
 		return nil, err
 	}
 
 	// render the body
-	body := content.ToBody(skey)
+	key, body := content.Render(id)
 
 	// build the file
 	file := File{
-		Key:    skey,
+		Key:    key,
 		Body:   strings.NewReader(body),
 		Length: len(body),
 		Hash:   md5.Sum([]byte(body)),

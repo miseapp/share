@@ -5,7 +5,6 @@ include ./Makefile.base.mk
 help-colw = 8
 
 # -- data --
-ds-endpoint = $(AWS_ENDPOINT)
 ds-denv = .env-dev
 ds-penv = .env-prod
 
@@ -28,7 +27,7 @@ dr-input = input.json
 # -- tools --
 ts-denv = env $$(grep -v "^\#" $(ds-denv) | xargs)
 ts-penv = env $$(grep -v "^\#" $(ds-penv) | xargs)
-ts-aws-d = $(ts-denv) aws --endpoint $(ds-endpoint)
+ts-aws-d = $(ts-denv) aws --endpoint http://localhost:4566
 ts-aws-p = $(ts-penv) aws
 
 ti-brew = brew
