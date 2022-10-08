@@ -23,8 +23,8 @@ type Key int
 
 // returns the base62-encoded key
 // see: https://gist.github.com/Pagliacii/dca0f6b732c19045d258eaee81917071
-func (f *Key) Encode() (string, error) {
-	digits := int(*f)
+func (f Key) Encode() (string, error) {
+	digits := int(f)
 
 	// return "0" when i == 0
 	if digits == 0 {

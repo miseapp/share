@@ -34,13 +34,13 @@ func NewSharedFile(source *Source) *SharedFile {
 }
 
 // returns the html representation of the shared file
-func (s *SharedFile) Render(id string) (string, string) {
+func (s *SharedFile) Render(id string) string {
 	reg, err := regexp.Compile("[\t\n]+")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	body := fmt.Sprintf(
+	html := fmt.Sprintf(
 		reg.ReplaceAllLiteralString(`
 			<html>
 				<head>
@@ -59,7 +59,5 @@ func (s *SharedFile) Render(id string) (string, string) {
 		id,
 	)
 
-	key := fmt.Sprintf("%s.html", id)
-
-	return key, body
+	return html
 }

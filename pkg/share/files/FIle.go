@@ -18,8 +18,8 @@ type File struct {
 
 // the content of a file
 type FileContent interface {
-	// render the contents & id to a key and body
-	Render(id string) (string, string)
+	// render the content for an id
+	Render(id string) string
 }
 
 // -- impls --
@@ -29,13 +29,13 @@ func NewFile(i int, content FileContent) (*File, error) {
 	k := Key(i)
 
 	// encode the file key to an id
-	id, err := k.Encode()
+	key, err := k.Encode()
 	if err != nil {
 		return nil, err
 	}
 
 	// render the body
-	key, body := content.Render(id)
+	body := content.Render(key)
 
 	// build the file
 	file := File{

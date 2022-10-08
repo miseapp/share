@@ -15,8 +15,7 @@ func TestRender_U(t *testing.T) {
 		},
 	)
 
-	key, html := share.Render("test")
-	assert.Equal(t, key, "test.html")
+	html := share.Render("test")
 	assert.Contains(t, html, `<meta name="mise-share-url" content="https://test.com">`)
 	assert.Contains(t, html, `<meta property="og:url" content="https://share.miseapp.co/test">`)
 }

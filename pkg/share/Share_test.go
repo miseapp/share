@@ -18,13 +18,14 @@ import (
 
 // -- tests --
 func TestShare_I(t *testing.T) {
-	files, err := files.New()
+	f, err := files.New()
 	assert.Equal(t, nil, err)
 
-	next := count(t, files) + 1
+	key, err := files.Key(count(t, f) + 1).Encode()
+	assert.Equal(t, nil, err)
 
 	share := Init(
-		files,
+		f,
 		&Source{
 			Url: test.Str("https://httpbin.org/get"),
 		},
@@ -32,7 +33,7 @@ func TestShare_I(t *testing.T) {
 
 	url, err := share.Call()
 	assert.Equal(t, nil, err)
-	assert.Equal(t, fmt.Sprintf("http://share-files.s3.localhost.localstack.cloud:4566/%d.html", next), url)
+	assert.Equal(t, fmt.Sprintf("http://share-files.s3.localhost.localstack.cloud:4566/%s", key), url)
 }
 
 // -- helpers --
