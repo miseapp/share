@@ -16,7 +16,7 @@ func (c TestContent) Render(id string) string {
 
 // -- tests --
 func TestNewFile_U(t *testing.T) {
-	file, err := NewFile(1, TestContent("hello"))
+	file, err := NewFileInput(1, TestContent("hello"))
 
 	assert.Nil(t, err)
 	assert.Equal(t, "1", file.Key)

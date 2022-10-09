@@ -15,11 +15,8 @@ import (
 
 // a repo for a collection of remote files
 type Config struct {
-	// the url scheme
-	Scheme string
-
-	// the aws host
-	Host string
+	// the aws url, if any
+	Url string
 
 	// the aws region
 	Region string
@@ -37,9 +34,9 @@ type Config struct {
 func New() *Config {
 	// host is for local redirection. an empty host will use the sdk default,
 	// which is a live aws url
-	host := ""
+	url := ""
 	if os.Getenv("LOCAL") != "" {
-		host = "localhost:4566"
+		url = os.Getenv("LOCAL_URL")
 	}
 
 	// if localstack host exists, use that
@@ -47,20 +44,13 @@ func New() *Config {
 	port := os.Getenv("EDGE_PORT")
 
 	if name != "" && port != "" {
-		host = fmt.Sprintf("%s:%s", name, port)
-	}
-
-	// use https, unless we have a local host
-	scheme := "https"
-	if host != "" {
-		scheme = "http"
+		url = fmt.Sprintf("%s:%s", name, port)
 	}
 
 	// build config
 	// TODO: may neeed a separate url for files https://localhost.localstack.cloud:4566
 	return &Config{
-		Scheme:    scheme,
-		Host:      host,
+		Url:       url,
 		Region:    os.Getenv("AWS_REGION"),
 		CountName: os.Getenv("SHARE_COUNT_NAME"),
 		FilesName: os.Getenv("SHARE_FILES_NAME"),
@@ -68,6 +58,42 @@ func New() *Config {
 }
 
 // -- queries --
+
+// if this is prod
+func (c *Config) IsProd() bool {
+	return c.Url == ""
+}
+
+// find the aws endpoint given a service and region
+func (c *Config) ResolveEndpoint(
+	service string,
+	region string,
+	options ...interface{},
+) (
+	aws.Endpoint,
+	error,
+) {
+	// get the config url, if any
+	url := c.Url
+	if url == "" {
+		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+	}
+
+	// if local, s3 needs a url that can add subdomains
+	if service == s3.ServiceID {
+		url = strings.Replace(url, "localhost", "s3.localhost.localstack.cloud", 1)
+	}
+
+	// use it instead of the default
+	endpoint := aws.Endpoint{
+		URL:           url,
+		SigningRegion: region,
+	}
+
+	return endpoint, nil
+}
+
+// -- factories --
 
 // init aws config
 func (c *Config) InitAws() (aws.Config, error) {
@@ -81,46 +107,4 @@ func (c *Config) InitAws() (aws.Config, error) {
 			aws.LogRequestWithBody|aws.LogResponseWithBody,
 		),
 	)
-}
-
-// the endpoint for the aws service
-func (c *Config) HostForService(service string) string {
-	// get the config host, if any
-	host := c.Host
-	if host == "" {
-		return ""
-	}
-
-	// if local, s3 needs a url that can add subdomains
-	if service == s3.ServiceID {
-		return strings.Replace(host, "localhost", "s3.localhost.localstack.cloud", 1)
-	}
-
-	return host
-}
-
-// -- i/Endpoint
-
-// resolve the config endpoint
-func (c *Config) ResolveEndpoint(
-	service string,
-	region string,
-	options ...interface{},
-) (
-	aws.Endpoint,
-	error,
-) {
-	// get the config host, if any
-	host := c.HostForService(service)
-	if host == "" {
-		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
-	}
-
-	// use it instead of the default
-	endpoint := aws.Endpoint{
-		URL:           fmt.Sprintf("%s://%s", c.Scheme, host),
-		SigningRegion: region,
-	}
-
-	return endpoint, nil
 }

@@ -3,6 +3,7 @@ package share
 import (
 	"context"
 	"fmt"
+	"mise-share/pkg/config"
 	"mise-share/pkg/share/files"
 	"mise-share/pkg/share/test"
 	"os"
@@ -18,13 +19,16 @@ import (
 
 // -- tests --
 func TestShare_I(t *testing.T) {
-	f, err := files.New()
+	cfg := config.New()
+
+	f, err := files.New(cfg)
 	assert.Equal(t, nil, err)
 
 	key, err := files.Key(count(t, f) + 1).Encode()
 	assert.Equal(t, nil, err)
 
 	share := Init(
+		cfg,
 		f,
 		&Source{
 			Url: test.Str("https://httpbin.org/get"),

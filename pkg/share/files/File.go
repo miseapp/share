@@ -8,8 +8,14 @@ import (
 
 // -- types --
 
-// a file w/ metadata
+// a created file
 type File struct {
+	Key string
+	Url string
+}
+
+// an input file w/ metadata
+type FileInput struct {
 	Key    string
 	Body   io.ReadSeeker
 	Length int
@@ -24,8 +30,18 @@ type FileContent interface {
 
 // -- impls --
 
-// builds a file from an id and its content
-func NewFile(i int, content FileContent) (*File, error) {
+// creates a file from key and url
+func NewFile(key string, url string) *File {
+	file := File{
+		Key: key,
+		Url: url,
+	}
+
+	return &file
+}
+
+// creates an input file from an id and content
+func NewFileInput(i int, content FileContent) (*FileInput, error) {
 	k := Key(i)
 
 	// encode the file key to an id
@@ -38,7 +54,7 @@ func NewFile(i int, content FileContent) (*File, error) {
 	body := content.Render(key)
 
 	// build the file
-	file := File{
+	file := FileInput{
 		Key:    key,
 		Body:   strings.NewReader(body),
 		Length: len(body),

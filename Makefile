@@ -27,7 +27,7 @@ dr-input = input.json
 # -- tools --
 ts-denv = env $$(grep -v "^\#" $(ds-denv) | xargs)
 ts-penv = env $$(grep -v "^\#" $(ds-penv) | xargs)
-ts-aws-d = $(ts-denv) aws --endpoint http://localhost:4566
+ts-aws-d = $(ts-denv) aws --endpoint $(LOCAL_URL)
 ts-aws-p = $(ts-penv) aws
 
 ti-brew = brew

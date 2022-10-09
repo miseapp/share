@@ -9,7 +9,7 @@ terraform {
   required_version = ">= 0.14.9"
 }
 
-// localstack
+// provider (in dev, localstack)
 provider "aws" {
   region                      = var.aws_region
 
@@ -22,10 +22,10 @@ provider "aws" {
 
   // configure all services to use localstack url
   endpoints {
-    dynamodb     = var.local ? "http://localhost:4566" : null
-    iam          = var.local ? "http://localhost:4566" : null
-    lambda       = var.local ? "http://localhost:4566" : null
-    s3           = var.local ? "http://s3.localhost.localstack.cloud:4566" : null
+    dynamodb     = var.local ? var.local_url : null
+    iam          = var.local ? var.local_url : null
+    lambda       = var.local ? var.local_url : null
+    s3           = var.local ? replace(var.local_url, "localhost", "s3.localhost.localstack.cloud") : null
   }
 }
 

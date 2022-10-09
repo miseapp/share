@@ -3,6 +3,10 @@ variable "local" {
   type = bool
 }
 
+variable "local_url" {
+  type = string
+}
+
 variable "aws_region" {
   type = string
 }
