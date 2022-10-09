@@ -30,7 +30,7 @@ func TestShare_I(t *testing.T) {
 	share := Init(
 		cfg,
 		f,
-		&Source{
+		&SourceUrl{
 			Url: test.Str("https://httpbin.org/get"),
 		},
 	)

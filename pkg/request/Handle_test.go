@@ -11,25 +11,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// -- helpers --
-func initRequest(body RequestBody) (*events.LambdaFunctionURLRequest, error) {
-	enc, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	res := events.LambdaFunctionURLRequest{
-		Body: string(enc),
-	}
-
-	return &res, nil
-}
-
 // -- tests --
-func TestHandle_I(t *testing.T) {
+func TestHandleWithUrl_I(t *testing.T) {
 	req, err := initRequest(RequestBody{
 		Source: &RequestSource{
 			Url: test.Str("https://test.com"),
+		},
+	})
+	assert.Nil(t, err)
+
+	res, err := Handle(context.TODO(), *req)
+	assert.Nil(t, err)
+	assert.Contains(t, res.Body, `http://share-files.s3.localhost.localstack.cloud:4566`)
+}
+
+func TestHandleWithJson_I(t *testing.T) {
+	req, err := initRequest(RequestBody{
+		Source: &RequestSource{
+			Json: test.Str("https://test.com"),
 		},
 	})
 	assert.Nil(t, err)
@@ -48,11 +47,27 @@ func TestHandle_BadRequest_U(t *testing.T) {
 	assert.Equal(t, res1.StatusCode, http.StatusBadRequest)
 	assert.Contains(t, res1.Body, "required field: 'source'")
 
-	req2, err := initRequest(RequestBody{Source: &RequestSource{Url: nil}})
+	req2, err := initRequest(RequestBody{Source: &RequestSource{Url: nil, Json: nil}})
 	assert.Nil(t, err)
 
 	res2, err := Handle(context.TODO(), *req2)
 	assert.Nil(t, err)
 	assert.Equal(t, res2.StatusCode, http.StatusBadRequest)
-	assert.Contains(t, res2.Body, "required field: 'source.url'")
+	assert.Contains(t, res2.Body, "required field: 'source.url' or 'source.json'")
+}
+
+// -- helpers --
+
+// create a lambda request from the body
+func initRequest(body RequestBody) (*events.LambdaFunctionURLRequest, error) {
+	enc, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	res := events.LambdaFunctionURLRequest{
+		Body: string(enc),
+	}
+
+	return &res, nil
 }

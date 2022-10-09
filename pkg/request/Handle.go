@@ -34,19 +34,29 @@ func Handle(
 		)
 	}
 
-	if body.Source.Url == nil {
+	// construct the source from variant input
+	var source share.SharedSource
+
+	if body.Source.Url != nil {
+		source = &share.SourceUrl{
+			Url: body.Source.Url,
+		}
+	} else if body.Source.Json != nil {
+		source = &share.SourceJson{
+			Json: body.Source.Json,
+		}
+	}
+
+	// validate the source
+	if source == nil {
 		return EncodeFailure(
 			http.StatusBadRequest,
-			"the request was missing the required field: 'source.url'",
+			"the request was missing the required field: 'source.url' or 'source.json'",
 		)
 	}
 
 	// init share command
-	cmd, err := share.New(
-		&share.Source{
-			Url: body.Source.Url,
-		},
-	)
+	cmd, err := share.New(source)
 
 	// if error, return failure
 	if err != nil {

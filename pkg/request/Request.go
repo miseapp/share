@@ -11,7 +11,8 @@ type RequestBody struct {
 
 // the api event's source for a shared file
 type RequestSource struct {
-	Url *string `json:"url"`
+	Url  *string `json:"url,omitempty"`
+	Json *string `json:"json,omitempty"`
 }
 
 // -- impls --

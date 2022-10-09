@@ -17,13 +17,13 @@ type Share struct {
 	files *files.Files
 
 	// props
-	source *Source
+	source SharedSource
 }
 
 // -- lifetime --
 
 // creates a new share command
-func New(source *Source) (*Share, error) {
+func New(source SharedSource) (*Share, error) {
 	// create a config
 	cfg := config.New()
 
@@ -47,7 +47,7 @@ func New(source *Source) (*Share, error) {
 func Init(
 	cfg *config.Config,
 	files *files.Files,
-	source *Source,
+	source SharedSource,
 ) *Share {
 	return &Share{
 		cfg:    cfg,

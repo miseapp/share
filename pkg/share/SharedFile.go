@@ -2,7 +2,6 @@ package share
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"regexp"
 )
@@ -11,41 +10,36 @@ import (
 
 // [entity] a new shared file.
 type SharedFile struct {
-	source *Source
+	source SharedSource
 }
 
-type File struct {
-	Body   io.ReadSeeker
-	Length int
-	Hash   int
-}
+// -- lifetime --
 
-// [value] the source of a shared file's contents.
-type Source struct {
-	Url *string
-}
-
-// -- impls --
 // inits a new shared file from a source
-func NewSharedFile(source *Source) *SharedFile {
+func NewSharedFile(source SharedSource) *SharedFile {
 	return &SharedFile{
 		source: source,
 	}
 }
 
+// -- queries --
+
 // returns the html representation of the shared file
 func (s *SharedFile) Render(id string) string {
+	// strip whitespace
 	reg, err := regexp.Compile("[\t\n]+")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// deref the source
+	// render the html
 	html := fmt.Sprintf(
 		reg.ReplaceAllLiteralString(`
 			<html>
 				<head>
 					<!-- data -->
-					<meta name="mise-share-url" content="%s">
+					<script id="mise-share" type="%s">%s</script>
 
 					<!-- preview -->
 					<meta property="og:title" content="Check out this recipe!">
@@ -55,7 +49,8 @@ func (s *SharedFile) Render(id string) string {
 				</head>
 			</html>
 		`, ""),
-		*s.source.Url,
+		s.source.Type(),
+		s.source.Value(),
 		id,
 	)
 
