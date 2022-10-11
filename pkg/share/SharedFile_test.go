@@ -1,7 +1,7 @@
 package share
 
 import (
-	"mise-share/pkg/share/test"
+	"mise-share/pkg/test"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

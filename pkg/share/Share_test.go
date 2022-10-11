@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"mise-share/pkg/config"
 	"mise-share/pkg/share/files"
-	"mise-share/pkg/share/test"
+	"mise-share/pkg/test"
 	"os"
 	"strconv"
 	"testing"
