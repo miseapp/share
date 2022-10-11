@@ -1,6 +1,7 @@
 package request
 
 import (
+	"log"
 	"mise-share/pkg/share"
 	"net/http"
 
@@ -18,8 +19,9 @@ func Handle(
 	error,
 ) {
 	// decode the body
-	body, err := DecodeRequestBody(req.Body)
+	body, err := DecodeRequestBody(req.Body, req.IsBase64Encoded)
 	if err != nil {
+		log.Println("[Handle] failed to decode request", req.Body)
 		return EncodeFailure(
 			http.StatusBadRequest,
 			err.Error(),
