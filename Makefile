@@ -12,7 +12,8 @@ df-infra = infra
 df-tf = $(df-infra)/.terraform
 df-plan = terraform.tfplan
 df-table = $(SHARE_COUNT_NAME)
-df-item-id = $(SHARE_FILES_NAME)
+df-files = $(SHARE_FILES_NAME)
+df-item-id = $(df-files)
 df-app = ../app
 df-app-dcfg = $(df-app)/Mise/InfoDev.plist
 
@@ -208,6 +209,13 @@ f/seed:
 f/tables:
 	$(ts-aws-d) \
 	dynamodb list-tables
+.PHONY: f/tables
+
+## list files in s3
+f/files:
+	$(ts-aws-d) \
+	s3 ls \
+	s3://share-files
 .PHONY: f/tables
 
 ## destroy infra

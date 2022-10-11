@@ -8,6 +8,7 @@ import (
 	"mise-share/pkg/config"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -50,6 +51,10 @@ func New(cfg *config.Config) (*Files, error) {
 	files := &Files{
 		cfg: cfg,
 		S3: s3.NewFromConfig(aws, func(opts *s3.Options) {
+			// allow path style unless prod
+			opts.UsePathStyle = !cfg.IsProd()
+
+			// grab options ref
 			s3Opts = opts
 		}),
 		Db: dynamodb.NewFromConfig(aws),
@@ -80,6 +85,18 @@ func (f *Files) fileUrl(key string) (string, error) {
 	uri, err := url.Parse(endpoint.URL)
 	if err != nil {
 		return "", err
+	}
+
+	// if local, use the dns-resolved endpoint
+	if !f.cfg.IsProd() {
+		n := len(uri.Host)
+
+		i := strings.IndexRune(uri.Host, ':')
+		if i == -1 {
+			i = n
+		}
+
+		uri.Host = "s3.localhost.localstack.cloud" + uri.Host[i:n]
 	}
 
 	// add the bucket to the host
@@ -116,7 +133,7 @@ func (f *Files) Create(content FileContent) (*File, error) {
 	)
 
 	if err != nil {
-		log.Println("[Files.Create] update failed", err)
+		log.Println("[Files.Create] could not get next id", err)
 		return nil, err
 	}
 
@@ -164,6 +181,7 @@ func (f *Files) Create(content FileContent) (*File, error) {
 	)
 
 	if err != nil {
+		log.Println("[Files.Create] could not create file", err)
 		return nil, err
 	}
 
