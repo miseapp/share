@@ -109,7 +109,7 @@ $(eval $(call alias, r, r/0))
 
 ## call local handler fn
 r/0:
-	$(tr-http) POST $$($(sf-url)) < $(dr-input)
+	$(tr-http) --verbose POST $$($(sf-url)) < $(dr-input)
 .PHONY: r/0
 
 ## read logs

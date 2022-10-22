@@ -21,7 +21,7 @@ func Handle(
 	// decode the body
 	body, err := DecodeRequestBody(req.Body, req.IsBase64Encoded)
 	if err != nil {
-		log.Println("[Handle] failed to decode request", req.Body)
+		log.Printf("[Handle] failed to decode request - len: %d\n>>>\n%s\n<<<\n", len(req.Body), req.Body)
 		return EncodeFailure(
 			http.StatusBadRequest,
 			err.Error(),

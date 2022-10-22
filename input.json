@@ -1,5 +1,5 @@
 {
   "source": {
-    "url": "https://test.com"
+    "json": "{\"rootId\":\"x-coredata:\\/\\/\\/RecipeRec\\/tAAAE17DD-D4E4-4F17-A77E-A98E1111E5DE1\",\"updated\":\"2001-01-01T00:00:00Z\",\"subtitle\":\"Test Subtitle\",\"id\":\"x-coredata:\\/\\/\\/RecipeRec\\/tAAAE17DD-D4E4-4F17-A77E-A98E1111E5DE2\",\"ingredients\":[{\"amount\":\"8\",\"id\":\"x-coredata:\\/\\/\\/IngredientRec\\/tAAAE17DD-D4E4-4F17-A77E-A98E1111E5DE3\",\"name\":\"Test name\",\"measure\":\"tsp\"}],\"title\":\"Test Title\",\"notes\":\"Test notes.\",\"share\":{\"id\":null,\"author\":\"new author\",\"notes\":\"Test notes.\",\"created\":\"2022-10-22T01:19:58Z\"},\"created\":\"2001-01-01T00:00:00Z\",\"references\":[{\"id\":\"x-coredata:\\/\\/\\/ReferenceRec\\/tAAAE17DD-D4E4-4F17-A77E-A98E1111E5DE4\",\"name\":\"Test name\",\"info\":\"https:\\/\\/test.com\"}]}"
   }
 }
