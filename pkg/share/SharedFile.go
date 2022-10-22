@@ -41,6 +41,9 @@ func (s *SharedFile) Render(id string) string {
 					<!-- data -->
 					<script id="mise-share" type="%s">%s</script>
 
+					<!-- browser redirect -->
+					<meta http-equiv="refresh" content="0; url=miseapp://https://share.miseapp.co/%s" />
+
 					<!-- preview -->
 					<meta property="og:title" content="Check out this recipe!">
 					<meta property="og:type" content="website">
