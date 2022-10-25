@@ -14,6 +14,7 @@ func TestNew_U(t *testing.T) {
 	assert.Equal(t, "us-east-1", cfg.Region)
 	assert.Equal(t, "share-count", cfg.CountName)
 	assert.Equal(t, "share-files", cfg.FilesName)
+	assert.Equal(t, "http://share-files.s3.localhost.localstack.cloud:4566", cfg.FilesHost)
 }
 
 func TestResolveLiveEndpoint_U(t *testing.T) {

@@ -1,11 +1,11 @@
-include .env-dev
+include .env
 include ./Makefile.base.mk
 
 # -- cosmetics --
 help-colw = 8
 
 # -- data --
-ds-denv = .env-dev
+ds-denv = .env
 ds-penv = .env-prod
 
 df-infra = infra

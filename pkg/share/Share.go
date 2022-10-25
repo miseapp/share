@@ -1,7 +1,6 @@
 package share
 
 import (
-	"fmt"
 	"mise-share/pkg/config"
 	"mise-share/pkg/share/files"
 )
@@ -60,20 +59,14 @@ func Init(
 
 // invokes the share command
 func (s *Share) Call() (string, error) {
-	// create the shared file
-	shared := NewSharedFile(s.source)
-	file, err := s.files.Create(shared)
+	// build the shared file
+	shared := NewSharedFile(s.source, &s.cfg.FilesHost)
 
-	// if err, short circuit
+	// and create it
+	url, err := s.files.Create(shared)
 	if err != nil {
 		return "", err
 	}
 
-	// if not prod, return the raw url
-	if !s.cfg.IsProd() {
-		return file.Url, nil
-	}
-
-	// in prod, use our custom domain
-	return fmt.Sprintf("https://share.miseapp.co/%s", file.Key), nil
+	return url, nil
 }

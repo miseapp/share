@@ -11,14 +11,6 @@ variable "aws_region" {
   type = string
 }
 
-variable "share_files_name" {
-  type = string
-}
-
-variable "share_count_name" {
-  type = string
-}
-
 variable "share_add_name" {
   type = string
 }
@@ -28,5 +20,17 @@ variable "share_add_binary" {
 }
 
 variable "share_add_archive" {
+  type = string
+}
+
+variable "share_count_name" {
+  type = string
+}
+
+variable "share_files_name" {
+  type = string
+}
+
+variable "share_files_host" {
   type = string
 }

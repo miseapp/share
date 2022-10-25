@@ -96,8 +96,9 @@ resource "aws_lambda_function" "share_add" {
   environment {
     variables = {
       LOCAL = var.local ? "1" : null
-      SHARE_FILES_NAME = var.share_files_name
       SHARE_COUNT_NAME = var.share_count_name
+      SHARE_FILES_NAME = var.share_files_name
+      SHARE_FILES_HOST = var.share_files_host
     }
   }
 }

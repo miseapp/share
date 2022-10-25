@@ -24,6 +24,9 @@ type Config struct {
 
 	// the files bucket name
 	FilesName string
+
+	// the host url for shared files
+	FilesHost string
 }
 
 // -- lifetime --
@@ -48,6 +51,7 @@ func New() *Config {
 		Region:    os.Getenv("AWS_REGION"),
 		CountName: os.Getenv("SHARE_COUNT_NAME"),
 		FilesName: os.Getenv("SHARE_FILES_NAME"),
+		FilesHost: os.Getenv("SHARE_FILES_HOST"),
 	}
 }
 

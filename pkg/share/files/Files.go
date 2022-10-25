@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"log"
 	"mise-share/pkg/config"
-	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -53,7 +51,6 @@ func New(cfg *config.Config) (*Files, error) {
 		S3: s3.NewFromConfig(aws, func(opts *s3.Options) {
 			// allow path style unless prod
 			opts.UsePathStyle = !cfg.IsProd()
-
 			// grab options ref
 			s3Opts = opts
 		}),
@@ -65,53 +62,10 @@ func New(cfg *config.Config) (*Files, error) {
 	return files, nil
 }
 
-// -- queries --
-
-// find the url of the file on s3
-func (f *Files) fileUrl(key string) (string, error) {
-	// try s3's endpoint resolver
-	endpoint, err := f.s3Opts.EndpointResolver.ResolveEndpoint(
-		f.cfg.Region,
-		f.s3Opts.EndpointOptions,
-	)
-
-	// there should be no error here, or it's a misconfiguration and the api
-	// requests wouldn't work anyways
-	if err != nil {
-		return "", err
-	}
-
-	// parse the s3 url
-	uri, err := url.Parse(endpoint.URL)
-	if err != nil {
-		return "", err
-	}
-
-	// if local, use the dns-resolved endpoint
-	if !f.cfg.IsProd() {
-		n := len(uri.Host)
-
-		i := strings.IndexRune(uri.Host, ':')
-		if i == -1 {
-			i = n
-		}
-
-		uri.Host = "s3.localhost.localstack.cloud" + uri.Host[i:n]
-	}
-
-	// add the bucket to the host
-	uri.Host = fmt.Sprintf("%s.%s", f.cfg.FilesName, uri.Host)
-
-	// add the object key
-	uri.Path = key
-
-	return uri.String(), nil
-}
-
 // -- commands --
 
 // creates a new file with the given content, returning the file key
-func (f *Files) Create(content FileContent) (*File, error) {
+func (f *Files) Create(content FileContent) (string, error) {
 	// atomically increment the counter
 	// see: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.AtomicCounters
 	resCount, err := f.Db.UpdateItem(
@@ -134,12 +88,12 @@ func (f *Files) Create(content FileContent) (*File, error) {
 
 	if err != nil {
 		log.Println("[Files.Create] could not get next id", err)
-		return nil, err
+		return "", err
 	}
 
 	// this shouldn't happen, UpdateItem inserts when the key is missing
 	if resCount == nil {
-		return nil, &MissingCountError{}
+		return "", &MissingCountError{}
 	}
 
 	// grab the new count as an integer
@@ -150,20 +104,20 @@ func (f *Files) Create(content FileContent) (*File, error) {
 	err = attributevalue.UnmarshalMap(resCount.Attributes, &rec)
 	if err != nil {
 		log.Println("[Files.Create] could not unmarshal response", err)
-		return nil, err
+		return "", err
 	}
 
 	count, err := strconv.Atoi(rec.Count)
 	if err != nil {
 		log.Println("[Files.Create] could not parse `Count` as integer", err)
-		return nil, err
+		return "", err
 	}
 
 	// build the redirect input
 	input, err := NewFileInput(count, content)
 	if err != nil {
 		log.Println("[Files.Create] could create input file", err)
-		return nil, err
+		return "", err
 	}
 
 	// insert the redirect file
@@ -182,20 +136,12 @@ func (f *Files) Create(content FileContent) (*File, error) {
 
 	if err != nil {
 		log.Println("[Files.Create] could not create file", err)
-		return nil, err
+		return "", err
 	}
 
-	// get the s3 file url; there should be no error at this point
-	url, err := f.fileUrl(input.Key)
-	if err != nil {
-		log.Println("[Files.Create] failed to build file url after create", err)
-		return nil, err
-	}
+	// build the s3 file url
+	url := fmt.Sprintf("%s/%s", f.cfg.FilesHost, input.Key)
 
-	file := NewFile(
-		input.Key,
-		url,
-	)
-
-	return file, nil
+	// and succeed w/ the url
+	return url, nil
 }
