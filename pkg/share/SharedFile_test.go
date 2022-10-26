@@ -17,8 +17,8 @@ func TestRender_U(t *testing.T) {
 	)
 
 	html := share.Render("test")
-	assert.Contains(t, html, `<meta http-equiv="refresh" content="0; url=miseapp://share?http://test.host/test" />`)
-	assert.Contains(t, html, `<meta property="og:url" content="http://test.host/test">`)
+	assert.Contains(t, html, `<meta http-equiv="refresh" content="0; url=miseapp://share?http://test.host/test"/>`)
+	assert.Contains(t, html, `<meta property="og:url" content="http://test.host/test"/>`)
 }
 
 func TestRenderUrl_U(t *testing.T) {
@@ -36,11 +36,11 @@ func TestRenderUrl_U(t *testing.T) {
 func TestRenderJson_U(t *testing.T) {
 	share := NewSharedFile(
 		&SourceJson{
-			Json: test.Str(`{"test":"json"}`),
+			Json: test.Str(`{"test":"json & w/ illegal char"}`),
 		},
 		test.Str("http://unused.host"),
 	)
 
 	html := share.Render("test")
-	assert.Contains(t, html, `<script id="mise-share" type="application/json">{"test":"json"}</script>`)
+	assert.Contains(t, html, `<script id="mise-share" type="application/json">{"test":"json &amp; w/ illegal char"}</script>`)
 }
