@@ -1,15 +1,14 @@
-include .env
+include .env.dev
 include ./Makefile.base.mk
 
 # -- cosmetics --
 help-colw = 8
 
 # -- data --
-ds-denv = .env
-ds-penv = .env-prod
+ds-denv = .env.dev
+ds-penv = .env.prod
 
-df-infra = infra
-df-tf = $(df-infra)/.terraform
+df-infra = infra/envs
 df-plan = terraform.tfplan
 df-table = $(SHARE_COUNT_NAME)
 df-files = $(SHARE_FILES_NAME)
@@ -33,9 +32,9 @@ ts-aws-p = $(ts-penv) aws
 
 ti-brew = brew
 
-tf-dc = docker-compose --env-file=$(ds-denv)
-tf-d = $(ts-denv) terraform -chdir="$(df-infra)"
-tf-p = $(ts-penv) terraform -chdir="$(df-infra)"
+tf-dc = docker-compose --env-file="$(ds-denv)"
+tf-d = $(ts-denv) terraform -chdir="$(df-infra)/dev"
+tf-p = $(ts-penv) terraform -chdir="$(df-infra)/prod"
 tf-plist = plutil
 
 td-go = GOOS=linux GOARCH=amd64 go
@@ -183,9 +182,9 @@ f/update: f/plan f/apply f/u/sync
 .PHONY: f/update
 
 ## create migration plan
-f/plan: $(df-tf)
+f/plan: $(df-infra)/dev/.terraform
 	$(tf-d) plan -out=$(df-plan)
-.PHONY: f
+.PHONY: f/plan
 
 ## apply migration plan
 f/apply:
@@ -237,5 +236,8 @@ f/u/sync:
 .PHONY: f/u/sync
 
 # -- i/helpers
-$(df-tf):
+$(df-infra)/dev/.terraform:
 	$(tf-d) init
+
+$(df-infra)/prod/.terraform:
+	$(tf-p) init

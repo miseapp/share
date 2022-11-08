@@ -44,7 +44,6 @@ func (s *SharedFile) Render(key string) string {
 	}
 
 	// render the html
-	// TODO: pull SHARE_FILES_HOST from .env instead of hardcoding https://share.miseapp.co
 	html := fmt.Sprintf(
 		reg.ReplaceAllLiteralString(`
 			<!DOCTYPE html>
