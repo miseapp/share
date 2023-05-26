@@ -7,6 +7,12 @@ terraform {
     }
   }
 
+  backend "s3" {
+    bucket = "share-infra"
+    key    = "prod/state"
+    region = var.aws_region
+  }
+
   required_version = ">= 0.14.9"
 }
 

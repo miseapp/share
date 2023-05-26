@@ -10,9 +10,13 @@ test.json
 # localstack/docker
 volume
 
+# creds
+.creds.*
+!.creds.dev
+
 # terraform
 .terraform
-terraform.tfplan
+*.tfplan
 *.tfstate
 *.tfstate.*
 *.tfvars
