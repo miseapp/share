@@ -184,7 +184,7 @@ f/setup: f/update f/seed
 .PHONY: f/setup
 
 ## plan, apply, seed [prod]
-f/setup: f/update/p f/seed/p
+f/setup/p: f/update/p f/seed/p
 .PHONY: f/setup/p
 
 ## plan, apply

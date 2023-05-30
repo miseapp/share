@@ -28,7 +28,7 @@ provider "aws" {
     dynamodb = var.local ? var.local_url : null
     iam      = var.local ? var.local_url : null
     lambda   = var.local ? var.local_url : null
-    s3       = var.local ? replace(var.local_url, "localhost", "s3.localhost.localstack.cloud") : null
+    s3       = var.local ? var.local_url : null
   }
 }
 
