@@ -8,7 +8,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "share-infra"
+    bucket = "mise--share-infra"
     key    = "prod/state"
     region = "us-east-1"
   }
@@ -37,10 +37,10 @@ module "share_add" {
 
 module "share_count" {
   source = "../../modules/share_count"
-  name = var.share_count_name
+  name   = var.share_count_name
 }
 
 module "share_files" {
   source = "../../modules/share_files_cdn"
-  name = var.share_files_name
+  name   = var.share_files_name
 }
