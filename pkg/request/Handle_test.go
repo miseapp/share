@@ -22,7 +22,7 @@ func TestHandleWithUrl_I(t *testing.T) {
 
 	res, err := Handle(context.TODO(), *req)
 	assert.Nil(t, err)
-	assert.Contains(t, res.Body, `http://share-files.s3.localhost.localstack.cloud:4566`)
+	assert.Contains(t, res.Body, `http://mise--share-files.s3.localhost.localstack.cloud:4566`)
 }
 
 func TestHandleWithJson_I(t *testing.T) {
@@ -35,7 +35,7 @@ func TestHandleWithJson_I(t *testing.T) {
 
 	res, err := Handle(context.TODO(), *req)
 	assert.Nil(t, err)
-	assert.Contains(t, res.Body, `http://share-files.s3.localhost.localstack.cloud:4566`)
+	assert.Contains(t, res.Body, `http://mise--share-files.s3.localhost.localstack.cloud:4566`)
 }
 
 func TestHandle_BadRequest_U(t *testing.T) {

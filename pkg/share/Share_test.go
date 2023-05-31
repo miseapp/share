@@ -37,7 +37,7 @@ func TestShare_I(t *testing.T) {
 
 	url, err := share.Call()
 	assert.Equal(t, nil, err)
-	assert.Equal(t, fmt.Sprintf("http://share-files.s3.localhost.localstack.cloud:4566/%s", key), url)
+	assert.Equal(t, fmt.Sprintf("http://mise--share-files.s3.localhost.localstack.cloud:4566/%s", key), url)
 }
 
 // -- helpers --

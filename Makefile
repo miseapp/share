@@ -179,6 +179,22 @@ f/down:
 	$(tf-dc) down
 .PHONY: f/down
 
+## init tf provider
+f/init:
+	$(tf-d) init
+.PHONY: f/init
+
+$(df-infra)/dev/.terraform:
+	$(tf-d) init
+
+## init tf provider [prod]
+f/init/p:
+	$(tf-p) init
+.PHONY: f/ini/pt
+
+$(df-infra)/prod/.terraform:
+	$(tf-p) init
+
 ## plan, apply, seed
 f/setup: f/update f/seed
 .PHONY: f/setup
@@ -200,9 +216,8 @@ f/plan: $(df-infra)/dev/.terraform a
 	$(tf-d) plan -out=$(df-plan)
 .PHONY: f/plan
 
-# f/plan/p: $(df-infra)/prod/.terraform
 ## make migration plan [prod]
-f/plan/p: a/p
+f/plan/p: $(df-infra)/prod/.terraform a/p
 	$(tf-p) plan -out=$(df-plan)
 .PHONY: f/plan/p
 
@@ -272,10 +287,3 @@ f/u/sync:
 	-string $$($(sf-url)) \
 	$(df-app-dcfg)
 .PHONY: f/u/sync
-
-# -- i/helpers
-$(df-infra)/dev/.terraform:
-	$(tf-d) init
-
-# $(df-infra)/prod/.terraform:
-# 	$(tf-p) init

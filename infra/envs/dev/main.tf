@@ -36,30 +36,26 @@ provider "aws" {
 module "share_add" {
   source = "../../modules/share_add"
 
-  // variables, dev only
+  // dev only
   local = var.local
 
-  // variables
+  // local
   name    = var.share_add_name
   binary  = var.share_add_binary
   archive = var.share_add_archive
 
-  // variables, external
-  share_count_name  = var.share_count_name
-  share_files_name  = var.share_files_name
-  share_files_host  = var.share_files_host
+  // external
+  share_count_name = var.share_count_name
+  share_files_name = var.share_files_name
+  share_files_host = var.share_files_host
 }
 
 module "share_count" {
   source = "../../modules/share_count"
-
-  // variables
   name = var.share_count_name
 }
 
 module "share_files" {
-  source = "../../modules/share_files"
-
-  // variables
+  source = "../../modules/share_files_public"
   name = var.share_files_name
 }

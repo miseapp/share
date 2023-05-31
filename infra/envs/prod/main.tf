@@ -10,7 +10,7 @@ terraform {
   backend "s3" {
     bucket = "share-infra"
     key    = "prod/state"
-    region = var.aws_region
+    region = "us-east-1"
   }
 
   required_version = ">= 0.14.9"
@@ -24,27 +24,23 @@ provider "aws" {
 module "share_add" {
   source = "../../modules/share_add"
 
-  // variables
+  // local
   name    = var.share_add_name
   binary  = var.share_add_binary
   archive = var.share_add_archive
 
-  // variables, external
-  share_count_name  = var.share_count_name
-  share_files_name  = var.share_files_name
-  share_files_host  = var.share_files_host
+  // external
+  share_count_name = var.share_count_name
+  share_files_name = var.share_files_name
+  share_files_host = var.share_files_host
 }
 
 module "share_count" {
   source = "../../modules/share_count"
-
-  // variables
   name = var.share_count_name
 }
 
 module "share_files" {
-  source = "../../modules/share_files"
-
-  // variables
+  source = "../../modules/share_files_cdn"
   name = var.share_files_name
 }
