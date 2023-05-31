@@ -17,12 +17,19 @@ resource "aws_cloudfront_distribution" "share_files" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
 
+  // https://github.com/riboseinc/terraform-aws-s3-cloudfront-website/blob/master/cloudfront.tf
+  // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-values-specify.html
   origin {
-    origin_id                = local.origin_id
-    origin_access_control_id = aws_cloudfront_origin_access_control.share_files.id
-    domain_name              = module.share_files.endpoint
-  }
+    origin_id   = local.origin_id
+    domain_name = module.share_files.endpoint
 
+    custom_origin_config {
+      origin_protocol_policy = "http-only"
+      http_port              = "80"
+      https_port             = "443"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
 
   default_cache_behavior {
     target_origin_id = local.origin_id
@@ -42,13 +49,6 @@ resource "aws_cloudfront_distribution" "share_files" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
-}
-
-resource "aws_cloudfront_origin_access_control" "share_files" {
-  name                              = "${var.name}--cdn-oac"
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
 }
 
 // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html#ExpirationDownloadDist
