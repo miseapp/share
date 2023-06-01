@@ -75,7 +75,7 @@ resource "aws_cloudfront_cache_policy" "share_files" {
   }
 }
 
-// -- add bucket access control
+// -- add cdn -> bucket access control
 resource "aws_s3_bucket_policy" "share_files" {
   bucket = module.share_files.bucket_id
   policy = jsonencode({
@@ -94,7 +94,7 @@ resource "aws_s3_bucket_policy" "share_files" {
       ],
       Condition : {
         StringEquals : {
-          "AWS:SourceArn" : "arn:aws:cloudfront::<AWS account ID>:distribution/<CloudFront distribution ID>"
+          "AWS:SourceArn" : aws_cloudfront_distribution.share_files.arn
         }
       }
     }

@@ -200,33 +200,37 @@ f/setup: f/update f/seed
 .PHONY: f/setup
 
 ## plan, apply, seed [prod]
-f/setup/p: f/update/p f/seed/p
+f/setup/p: f/plan/a/p f/apply/p f/seed/p
 .PHONY: f/setup/p
 
 ## plan, apply
-f/update: f/plan f/apply f/u/sync
+f/update: f/plan/a f/apply f/u/sync
 .PHONY: f/update
 
-## plan, apply [prod]
-f/update/p: f/plan/p f/apply/p
-.PHONY: f/update/p
-
-## make migration plan
-f/plan: $(df-infra)/dev/.terraform a
+## build plan
+f/plan: $(df-infra)/dev/.terraform
 	$(tf-d) plan -out=$(df-plan)
 .PHONY: f/plan
 
-## make migration plan [prod]
-f/plan/p: $(df-infra)/prod/.terraform a/p
+## build plan [prod]
+f/plan/p: $(df-infra)/prod/.terraform
 	$(tf-p) plan -out=$(df-plan)
 .PHONY: f/plan/p
 
-## apply migration plan
+## build plan & archive
+f/plan/a: $(df-infra)/dev/.terraform a f/plan
+.PHONY: f/plan
+
+## build plan & archive [prod]
+f/plan/a/p: $(df-infra)/prod/.terraform a/p f/plan/p
+.PHONY: f/plan/p
+
+## apply plan
 f/apply:
 	$(tf-d) apply -auto-approve $(df-plan)
 .PHONY: f/apply
 
-## apply migration plan [prod]
+## apply plan [prod]
 f/apply/p:
 	$(tf-p) apply $(df-plan)
 .PHONY: f/apply/p

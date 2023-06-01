@@ -11,11 +11,11 @@ terraform {
 }
 
 provider "aws" {
-  region                      = var.aws_region
+  region = var.aws_region
 
   // use local credentials
-  access_key                  = var.local ? "test" : null
-  secret_key                  = var.local ? "test" : null
+  access_key = var.local ? "test" : null
+  secret_key = var.local ? "test" : null
 
   // use localstack-compatible apis
   s3_use_path_style           = var.local
@@ -52,10 +52,11 @@ module "share_add" {
 
 module "share_count" {
   source = "../../modules/share_count"
-  name = var.share_count_name
+  name   = var.share_count_name
 }
 
 module "share_files" {
-  source = "../../modules/share_files_public"
-  name = var.share_files_name
+  source        = "../../modules/share_files"
+  name          = var.share_files_name
+  force_destroy = true
 }
