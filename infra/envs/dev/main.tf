@@ -56,7 +56,6 @@ module "share_count" {
 }
 
 module "share_files" {
-  source        = "../../modules/share_files"
-  name          = var.share_files_name
-  force_destroy = true
+  source = "../../modules/share_files_web"
+  name   = var.share_files_name
 }

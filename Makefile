@@ -1,16 +1,15 @@
-include .env.dev
+env := $(or $(ENV), dev)
+env-file := .env.$(env)
+crd-file := .creds.$(env)
+
+include $(env-file)
 include ./Makefile.base.mk
 
 # -- cosmetics --
 help-colw = 10
 
 # -- data --
-ds-env-d = .env.dev
-ds-env-p = .env.prod
-ds-crd-d = .creds.dev
-ds-crd-p = .creds.prod
-
-df-infra = infra/envs
+df-infra = infra/envs/$(env)
 df-table = $(SHARE_COUNT_NAME)
 df-files = $(SHARE_FILES_NAME)
 df-item-id = $(df-files)
@@ -18,8 +17,9 @@ df-app = ../app
 df-app-dcfg = $(df-app)/Mise/InfoDev.plist
 df-plan = terraform.tfplan
 
+db-builds = build/bin
+db-archives = build/archive
 db-entry = cmd/main.go
-db-build = build
 db-binary = $(SHARE_ADD_BINARY)
 db-archive = $(SHARE_ADD_ARCHIVE)
 
@@ -27,30 +27,30 @@ dr-fn = $(SHARE_ADD_NAME)
 dr-input = input.json
 
 # -- tools --
-ts-env-d = env $$(grep -h -v "^\#" $(ds-crd-d) $(ds-env-d) | xargs)
-ts-env-p = env $$(grep -h -v "^\#" $(ds-crd-p) $(ds-env-p) | xargs)
-ts-aws-d = $(ts-env-d) aws --endpoint $(LOCAL_URL)
-ts-aws-p = $(ts-env-p) aws
+ts-env = env $$(grep -h -v "^\#" $(crd-file) $(env-file) | xargs)
+ts-aws = $(ts-env) aws $(if $(LOCAL_URL),--endpoint $(LOCAL_URL),)
 
 ti-brew = brew
 
-tf-dc = docker-compose --env-file="$(ds-crd-d)" --env-file="$(ds-env-d)"
-tf-d = $(ts-env-d) terraform -chdir="$(df-infra)/dev"
-tf-p = $(ts-env-p) terraform -chdir="$(df-infra)/prod"
+tf-dc = docker-compose --env-file="$(crd-file)" --env-file="$(env-file)"
+tf-tf = $(ts-env) terraform -chdir="$(df-infra)"
 tf-plist = plutil
 
-td-go = GOOS=linux GOARCH=amd64 go
-tb-d-go = $(ts-env-d) $(td-go)
-tb-p-go = $(ts-env-p) $(td-go)
-
-tt-go = go
-tt-d-go = $(ts-env-d) $(tt-go)
-tt-p-go = $(ts-env-p) $(tt-go)
+tb-go = $(ts-env) GOOS=linux GOARCH=amd64 go
+tt-go = $(ts-env) go
 
 tr-http = http
 
 # -- state --
-sf-url = $(tf-d) output -raw share_add_url
+sf-url = $(tf-tf) output -raw share_add_url
+
+# -- helpers --
+dev-only:
+ifneq ($(env), dev)
+	$(info ✘ this can only be run in dev)
+	$(error 1)
+endif
+.PHONY: dev-only
 
 ## -- init (i) --
 $(eval $(call alias, init, i/0))
@@ -68,10 +68,10 @@ i/upgr:
 
 # -- i/helpers
 i/pre:
-ifeq ("$(shell command -v $(ti-brew))", "")
+ifeq ($(shell command -v $(ti-brew)),)
 	$(info ✘ brew is not installed, please see:)
 	$(info - https://brew.sh)
-	$(error 1)
+	$(error 2)
 endif
 .PHONY: i/pre
 
@@ -80,33 +80,31 @@ $(eval $(call alias, build, b/0))
 $(eval $(call alias, b, b/0))
 
 ## build fn
-b/0:
-	$(tb-d-go) build -o $(db-binary) $(db-entry)
+b/0: $(db-builds)
+	$(tb-go) build -o $(db-builds)/$(db-binary) $(db-entry)
 .PHONY: b/0
-
-## build fn [prod]
-b/p:
-	$(tb-p-go) build -o $(db-binary) $(db-entry)
-.PHONY: b/prod
 
 ## clean build dir
 b/clean:
-	rm -rf $(db-build)
+	rm -rf $(db-builds)
 .PHONY: b/clean
+
+$(db-builds):
+	mkdir -p $(db-builds)
 
 ## -- archive (a) --
 $(eval $(call alias, archive, a/0))
 $(eval $(call alias, a, a/0))
 
 ## build & archive
-a/0: b/clean b
-	zip $(db-archive) $(db-binary)
+a/0: $(db-archives) b/clean b
+	rm -f $(db-archives)/$(db-archive)
+	cd $(db-builds) && zip $(db-archive) $(db-binary)
+	mv $(db-builds)/$(db-archive) $(db-archives)/$(db-archive)
 .PHONY: a/0
 
-## build & archive [prod]
-a/p: b/clean b/p
-	zip $(db-archive) $(db-binary)
-.PHONY: a/p
+$(db-archives):
+	mkdir -p $(db-archives)
 
 ## -- run (r) --
 $(eval $(call alias, run, r/0))
@@ -119,7 +117,7 @@ r/0:
 
 ## read logs
 r/logs:
-	$(ts-aws-d) \
+	$(ts-aws) \
 	logs tail \
 	/aws/lambda/$(dr-fn)
 .PHONY: r/logs
@@ -130,12 +128,12 @@ $(eval $(call alias, t, t/0))
 
 ## run tests
 t/0:
-	$(tt-d-go) test ./... -run "_U"
+	$(tt-go) test ./... -run "_U"
 .PHONY: t/0
 
 ## run unit & int tests
 t/all:
-	$(tt-d-go) test ./...
+	$(tt-go) test ./...
 .PHONY: t/all
 
 ## -- infra (f) --
@@ -147,145 +145,106 @@ f/0: f/dev
 .PHONY: f/0
 
 ## run infra
-f/dev: f/up f/setup f/tail
+f/dev: dev-only f/up f/setup f/tail
 .PHONY: f/dev
 
 ## run infra w/ debug output
-f/dbg: f/upv f/setup f/tail
+f/dbg: dev-only f/upv f/setup f/tail
 .PHOYN: f/dbg
 
 ## run ls container
-f/up:
+f/up: dev-only
 	$(tf-dc) up -d
 .PHONY: f/up
 
 ## run ls container w/ debug output
-f/upv:
+f/upv: dev-only
 	LS_LOG=trace $(tf-dc) up -d
 .PHONY: f/upv
 
 ## run ls container in foreground
-f/upf:
+f/upf: dev-only
 	$(tf-dc) up
 .PHONY: f/upf
 
 ## tail ls logs
-f/tail:
+f/tail: dev-only
 	$(tf-dc) logs -f -t
 .PHONY: f/tail
 
 ## stop ls
-f/down:
+f/down: dev-only
 	$(tf-dc) down
 .PHONY: f/down
 
 ## init tf provider
 f/init:
-	$(tf-d) init
+	$(tf-tf) init
 .PHONY: f/init
 
-$(df-infra)/dev/.terraform:
-	$(tf-d) init
-
-## init tf provider [prod]
-f/init/p:
-	$(tf-p) init
-.PHONY: f/ini/pt
-
-$(df-infra)/prod/.terraform:
-	$(tf-p) init
+$(df-infra)/.terraform:
+	$(tf-tf) init
 
 ## plan, apply, seed
-f/setup: f/update f/seed
+f/setup: dev-only f/update f/seed
 .PHONY: f/setup
 
-## plan, apply, seed [prod]
-f/setup/p: f/plan/a/p f/apply/p f/seed/p
-.PHONY: f/setup/p
-
-## plan, apply
-f/update: f/plan/a f/apply f/u/sync
+## plan, apply, sync url
+f/update: dev-only f/plan/a f/apply f/u/sync
 .PHONY: f/update
 
 ## build plan
-f/plan: $(df-infra)/dev/.terraform
-	$(tf-d) plan -out=$(df-plan)
+f/plan: $(df-infra)/.terraform
+	$(tf-tf) plan -out=$(df-plan)
 .PHONY: f/plan
-
-## build plan [prod]
-f/plan/p: $(df-infra)/prod/.terraform
-	$(tf-p) plan -out=$(df-plan)
-.PHONY: f/plan/p
 
 ## build plan & archive
-f/plan/a: $(df-infra)/dev/.terraform a f/plan
+f/plan/a: $(df-infra)/.terraform a f/plan
 .PHONY: f/plan
-
-## build plan & archive [prod]
-f/plan/a/p: $(df-infra)/prod/.terraform a/p f/plan/p
-.PHONY: f/plan/p
 
 ## apply plan
 f/apply:
-	$(tf-d) apply -auto-approve $(df-plan)
+	$(tf-tf) apply $(TF_APPLY_OPT) $(df-plan)
 .PHONY: f/apply
-
-## apply plan [prod]
-f/apply/p:
-	$(tf-p) apply $(df-plan)
-.PHONY: f/apply/p
 
 ## validate config
 f/valid:
-	$(tf-d) validate
-.PHONY: f/validate
-
-## validate config [prod]
-f/valid/p:
-	$(tf-p) validate
-.PHONY: f/valid/p
+	$(tf-tf) validate
+.PHONY: f/valid
 
 ## seed initial state
 f/seed:
-	$(ts-aws-d) \
+	$(ts-aws) \
 	dynamodb put-item \
 	--table-name $(df-table) \
 	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }'
 .PHONY: f/seed
 
-## seed initial state [prod]
-f/seed/p:
-	$(ts-aws-p) \
-	dynamodb put-item \
-	--table-name $(df-table) \
-	--item '{ "Id": {"S": $(df-item-id)}, "Count": {"N": "0"} }'
-.PHONY: f/seed/p
-
 ## destroy infra
-f/clean:
-	$(tf-d) destroy
+f/clean: dev-only
+	$(tf-tf) destroy
 .PHONY: f/clean
 
 ## list tables
 f/tables:
-	$(ts-aws-d) \
+	$(ts-aws) \
 	dynamodb list-tables
 .PHONY: f/tables
 
 ## list files in s3
 f/files:
-	$(ts-aws-d) \
+	$(ts-aws) \
 	s3 ls \
 	s3://share-files
 .PHONY: f/tables
 
 ## show the dev share url
-f/url:
+f/url: dev-only
 	echo "$$($(sf-url))"
 .PHONY: f/url
 
 ## sync the dev share url
-f/u/sync:
+f/u/sync: dev-only
 	$(tf-plist) \
 	-replace "Share-URL" \
 	-string $$($(sf-url)) \
