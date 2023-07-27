@@ -12,23 +12,16 @@ locals {
 // -- add cdn --
 resource "aws_cloudfront_distribution" "share_files" {
   # aliases = ["share.miseapp.co"]
+
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
 
-  // https://github.com/riboseinc/terraform-aws-s3-cloudfront-website/blob/master/cloudfront.tf
-  // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-values-specify.html
   origin {
-    origin_id   = local.origin_id
-    domain_name = module.share_files.endpoint
-
-    custom_origin_config {
-      origin_protocol_policy = "http-only"
-      http_port              = "80"
-      https_port             = "443"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
+    domain_name              = module.share_files.bucket_regional_domain_name
+    origin_id                = local.origin_id
+    origin_access_control_id = aws_cloudfront_origin_access_control.share_files.id
   }
 
   default_cache_behavior {
@@ -49,6 +42,14 @@ resource "aws_cloudfront_distribution" "share_files" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+}
+
+resource "aws_cloudfront_origin_access_control" "share_files" {
+  name                              = "${var.name}--cdn-origin-acl"
+  description                       = "cdn access control to the shared files bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
 // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html#ExpirationDownloadDist
@@ -76,6 +77,14 @@ resource "aws_cloudfront_cache_policy" "share_files" {
 }
 
 // -- add cdn -> bucket access control
+resource "aws_s3_bucket_public_access_block" "share_files" {
+  bucket                  = module.share_files.bucket_id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket_policy" "share_files" {
   bucket = module.share_files.bucket_id
   policy = jsonencode({
