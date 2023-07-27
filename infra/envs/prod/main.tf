@@ -43,4 +43,5 @@ module "share_count" {
 module "share_files" {
   source = "../../modules/share_files_cdn"
   name   = var.share_files_name
+  host   = var.share_files_host
 }

@@ -6,12 +6,13 @@ module "share_files" {
 
 // -- locals --
 locals {
+  domain    = replace(var.host, "/https?:\\/\\//", "")
   origin_id = "${var.name}--cdn-origin"
 }
 
 // -- add cdn --
 resource "aws_cloudfront_distribution" "share_files" {
-  # aliases = ["share.miseapp.co"]
+  aliases = [local.domain]
 
   enabled             = true
   is_ipv6_enabled     = true
@@ -40,7 +41,8 @@ resource "aws_cloudfront_distribution" "share_files" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn = aws_acm_certificate.share_files.arn
+    ssl_support_method  = "sni-only"
   }
 }
 
@@ -74,6 +76,11 @@ resource "aws_cloudfront_cache_policy" "share_files" {
       query_string_behavior = "all"
     }
   }
+}
+
+resource "aws_acm_certificate" "share_files" {
+  domain_name       = local.domain
+  validation_method = "DNS"
 }
 
 // -- add cdn -> bucket access control
