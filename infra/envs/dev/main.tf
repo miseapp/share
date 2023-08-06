@@ -45,9 +45,11 @@ module "share_add" {
   archive = var.share_add_archive
 
   // external
-  share_count_name = var.share_count_name
-  share_files_name = var.share_files_name
-  share_files_host = var.share_files_host
+  share_count_name       = var.share_count_name
+  share_count_table_arn  = module.share_count.table_arn
+  share_files_name       = var.share_files_name
+  share_files_host       = var.share_files_host
+  share_files_bucket_arn = module.share_files.bucket_arn
 }
 
 module "share_count" {
